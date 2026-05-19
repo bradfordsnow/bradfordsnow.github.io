@@ -405,34 +405,35 @@
     /* iOS Safari doesn't support background-attachment:fixed — use scroll */
     body {
       background-attachment: scroll;
-      background-size: 36% auto;
-      background-position: right 0 top 0;
+      background-size: auto 70vh;
+      background-position: 40% top;
       background-repeat: no-repeat;
     }
 
-    /* Gradient top-to-bottom on mobile (photo is centred, not right-side) */
+    /* Gradient top-to-bottom on mobile */
     .hero-gradient {
       background: linear-gradient(
         to bottom,
-        rgba(11,11,11,0.55) 0%,
-        rgba(11,11,11,0.80) 50%,
+        rgba(11,11,11,0.35) 0%,
+        rgba(11,11,11,0.65) 50%,
         rgba(11,11,11,0.97) 100%
       );
     }
 
-    /* Hero: flex so signature sits at the bottom of the viewport */
-    .hero {
-      display: flex;
-      align-items: flex-end;
-    }
+    /* Hero needs no flex on mobile — hero-content is fixed */
+    .hero { display: block; }
 
-    /* Signature block: static flow, full width, mobile padding */
+    /* Signature block: fixed at bottom, centered */
     .hero-content {
-      position: relative;
-      bottom: auto;
-      left: auto;
+      position: fixed;
+      bottom: 48px;
+      left: 0;
       width: 100%;
-      padding: 0 28px 48px;
+      padding: 0 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
 
     .ig-corner {
@@ -638,10 +639,9 @@
 
   // Signature stays fixed while bio rises toward it, then they lock and scroll together
   (function () {
-    if (window.innerWidth < 768) return;
     var hc    = document.querySelector('.hero-content');
     var about = document.getElementById('about');
-    var BOT   = 56;
+    var BOT   = window.innerWidth < 768 ? 48 : 56;
 
     function update() {
       var bioTextTop = about.getBoundingClientRect().top + 64;
