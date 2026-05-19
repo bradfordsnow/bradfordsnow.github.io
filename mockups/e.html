@@ -619,34 +619,38 @@
   ];
   let currentVideo = 0;
 
+  // Shared reel state — must be accessible to reelScroll and the clone setup
+  var reel       = document.getElementById('grid-reel');
+  var reelOneSet = 0;
+
   function reelScroll(dir) {
-    var reel   = document.getElementById('grid-reel');
     var thumb  = reel.querySelector('.thumb');
     var amount = thumb ? thumb.offsetWidth + 8 : 340;
+    // Preemptively jump one set so the smooth scroll always has room in both directions
+    if (reelOneSet) {
+      var next = reel.scrollLeft + dir * amount;
+      if (next < reelOneSet)          reel.scrollLeft += reelOneSet;
+      else if (next >= reelOneSet * 2) reel.scrollLeft -= reelOneSet;
+    }
     reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
 
-  // Infinite clone loop — prepend + append clones, start in the middle set
+  // Infinite clone loop — [clones][originals][clones], start in the middle
   (function () {
-    var reel = document.getElementById('grid-reel');
     var originals = Array.from(reel.querySelectorAll('.thumb'));
-
-    // Prepend clones before originals
     var pre = document.createDocumentFragment();
     originals.forEach(function (t) { pre.appendChild(t.cloneNode(true)); });
     reel.insertBefore(pre, reel.firstChild);
-
-    // Append clones after originals
     originals.forEach(function (t) { reel.appendChild(t.cloneNode(true)); });
 
-    var oneSet = 0;
     requestAnimationFrame(function () {
-      oneSet = reel.scrollWidth / 3;
-      reel.scrollLeft = oneSet; // start viewing originals
+      reelOneSet     = reel.scrollWidth / 3;
+      reel.scrollLeft = reelOneSet;
 
+      // Handle swipe / momentum scroll on mobile
       reel.addEventListener('scroll', function () {
-        if (reel.scrollLeft < oneSet)          reel.scrollLeft += oneSet;
-        else if (reel.scrollLeft >= oneSet * 2) reel.scrollLeft -= oneSet;
+        if (reel.scrollLeft < reelOneSet)           reel.scrollLeft += reelOneSet;
+        else if (reel.scrollLeft >= reelOneSet * 2)  reel.scrollLeft -= reelOneSet;
       }, { passive: true });
     });
   }());
