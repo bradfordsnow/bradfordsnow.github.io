@@ -65,6 +65,7 @@
     z-index: 2;
     padding: 0 72px;
     width: 580px;
+    will-change: transform;
   }
 
   .signature {
@@ -406,7 +407,7 @@
     body {
       background-attachment: scroll;
       background-size: auto 70vh;
-      background-position: 40% top;
+      background-position: 65% top;
       background-repeat: no-repeat;
     }
 
@@ -646,11 +647,8 @@
     function update() {
       var bioTextTop = about.getBoundingClientRect().top + 64;
       var sigBottom  = window.innerHeight - BOT;
-      if (bioTextTop > sigBottom) {
-        hc.style.bottom = BOT + 'px';
-      } else {
-        hc.style.bottom = (BOT + (sigBottom - bioTextTop)) + 'px';
-      }
+      var lift = Math.max(0, sigBottom - bioTextTop);
+      hc.style.transform = lift > 0 ? 'translateY(-' + Math.round(lift) + 'px)' : '';
       requestAnimationFrame(update);
     }
 
