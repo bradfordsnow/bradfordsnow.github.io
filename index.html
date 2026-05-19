@@ -633,9 +633,8 @@
   var lastThumb = thumbs[thumbs.length - 1];
 
   function updateArrows() {
-    var amount   = thumbs[0] ? thumbs[0].offsetWidth + 8 : 340;
     var atStart  = reel.scrollLeft <= 4;
-    var atEnd    = reel.scrollLeft + amount >= reel.scrollWidth - reel.clientWidth;
+    var atEnd    = reel.scrollLeft >= reel.scrollWidth - reel.clientWidth - 20;
     arrowL.style.opacity       = atStart ? '0' : '1';
     arrowL.style.pointerEvents = atStart ? 'none' : '';
     arrowR.style.opacity       = atEnd ? '0' : '1';
