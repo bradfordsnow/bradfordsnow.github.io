@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mockup E</title>
+<title>Bradford Snow</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -631,21 +631,30 @@
     if (e.key === 'ArrowRight') lightNav(1);
   });
 
-  // Signature stays fixed until bio catches up, then they scroll together
+  // Signature stays fixed while bio rises toward it, then they lock and scroll together
   (function () {
     if (window.innerWidth < 768) return;
-    var hc = document.querySelector('.hero-content');
-    var about = document.getElementById('about');
-    var BOT = 56, GAP = 16;
+    var hc       = document.querySelector('.hero-content');
+    var about    = document.getElementById('about');
+    var BOT      = 56;
+    var attached = false;
+    var attachY  = 0;
 
     function update() {
-      var bioTop = about.getBoundingClientRect().top;
-      var desired = window.innerHeight - bioTop + GAP;
-      hc.style.bottom = Math.max(BOT, desired) + 'px';
+      var scrollY    = window.scrollY || window.pageYOffset;
+      if (attached) {
+        hc.style.bottom = (BOT + scrollY - attachY) + 'px';
+        return;
+      }
+      // Trigger when the first line of bio text reaches the signature's bottom edge
+      var bioTextTop = about.getBoundingClientRect().top + 64;
+      if (bioTextTop <= window.innerHeight - BOT) {
+        attached = true;
+        attachY  = scrollY;
+      }
     }
 
     window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
     update();
   }());
 </script>
