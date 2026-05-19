@@ -585,7 +585,7 @@
       <div class="logo-item" data-name="Ford"><img src="https://cdn.simpleicons.org/ford/ffffff" alt="Ford" style="height:34px;"></div>
       <div class="logo-item" data-name="Netflix"><img src="https://cdn.simpleicons.org/netflix/ffffff" alt="Netflix" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Facebook"><img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook"></div>
-      <div class="logo-item" data-name="Chipotle"><img class="local" src="chipotle-circle.svg" alt="Chipotle" style="height:32px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Chipotle"><img class="local" src="chipotle-circle.svg" alt="Chipotle" style="height:27px;" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Comedy Central"><img src="https://cdn.simpleicons.org/comedycentral/ffffff" alt="Comedy Central" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Hilton"><img src="https://cdn.simpleicons.org/hilton/ffffff" alt="Hilton" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Meta"><img src="https://cdn.simpleicons.org/meta/ffffff" alt="Meta"></div>
@@ -623,15 +623,26 @@
     var reel   = document.getElementById('grid-reel');
     var thumb  = reel.querySelector('.thumb');
     var amount = thumb ? thumb.offsetWidth + 8 : 340;
-    var max    = reel.scrollWidth - reel.clientWidth;
-    if (dir > 0 && reel.scrollLeft + amount >= max - 4) {
-      reel.scrollTo({ left: 0, behavior: 'smooth' });
-    } else if (dir < 0 && reel.scrollLeft <= amount + 4) {
-      reel.scrollTo({ left: max, behavior: 'smooth' });
-    } else {
-      reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
-    }
+    reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
+
+  // Infinite clone loop — duplicate thumbs so the reel appears endless
+  (function () {
+    var reel = document.getElementById('grid-reel');
+    var originals = Array.from(reel.querySelectorAll('.thumb'));
+    originals.forEach(function (t) { reel.appendChild(t.cloneNode(true)); });
+
+    var halfWidth = 0;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        halfWidth = reel.scrollWidth / 2;
+        reel.addEventListener('scroll', function () {
+          if (reel.scrollLeft >= halfWidth) reel.scrollLeft -= halfWidth;
+          else if (reel.scrollLeft < 0)    reel.scrollLeft += halfWidth;
+        }, { passive: true });
+      });
+    });
+  }());
   function openLight(index) {
     currentVideo = index;
     document.getElementById('lightbox-iframe').src = videos[currentVideo];
