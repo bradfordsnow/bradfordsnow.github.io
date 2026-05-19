@@ -633,20 +633,22 @@
   var lastThumb = thumbs[thumbs.length - 1];
 
   function updateArrows() {
+    var amount   = thumbs[0] ? thumbs[0].offsetWidth + 8 : 340;
     var atStart  = reel.scrollLeft <= 4;
-    // Calculate last thumb's scroll position independent of offsetParent
-    var lastScrollLeft = lastThumb.getBoundingClientRect().left
-                       - reel.getBoundingClientRect().left
-                       + reel.scrollLeft;
-    var atEnd    = reel.scrollLeft >= lastScrollLeft - 4;
+    var atEnd    = reel.scrollLeft + amount >= reel.scrollWidth - reel.clientWidth;
     arrowL.style.opacity       = atStart ? '0' : '1';
     arrowL.style.pointerEvents = atStart ? 'none' : '';
     arrowR.style.opacity       = atEnd ? '0' : '1';
     arrowR.style.pointerEvents = atEnd ? 'none' : '';
   }
 
-  reel.addEventListener('scroll', updateArrows, { passive: true });
-  updateArrows();
+  var scrollTimer;
+  reel.addEventListener('scroll', function () {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(updateArrows, 150);
+  }, { passive: true });
+  reel.addEventListener('scrollend', updateArrows, { passive: true });
+  setTimeout(updateArrows, 100);
   function openLight(index) {
     currentVideo = index;
     document.getElementById('lightbox-iframe').src = videos[currentVideo];
