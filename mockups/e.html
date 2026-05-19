@@ -405,7 +405,9 @@
     /* iOS Safari doesn't support background-attachment:fixed — use scroll */
     body {
       background-attachment: scroll;
-      background-position: 72% center;
+      background-size: 36% auto;
+      background-position: right 0 top 0;
+      background-repeat: no-repeat;
     }
 
     /* Gradient top-to-bottom on mobile (photo is centred, not right-side) */
@@ -524,7 +526,7 @@
   </section>
 
   <!-- Ad Work -->
-  <section class="section" style="padding-top: 12px;">
+  <section class="section" style="padding-top: 12px; z-index: 3;">
     <div class="reel-wrap">
       <button class="reel-arrow left" onclick="reelScroll(-1)">&#8249;</button>
       <div class="grid-reel" id="grid-reel">
@@ -610,7 +612,10 @@
   let currentVideo = 0;
 
   function reelScroll(dir) {
-    document.getElementById('grid-reel').scrollBy({ left: dir * 340, behavior: 'smooth' });
+    var reel  = document.getElementById('grid-reel');
+    var thumb = reel.querySelector('.thumb');
+    var amount = thumb ? thumb.offsetWidth + 8 : 340;
+    reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
   function openLight(index) {
     currentVideo = index;
@@ -634,28 +639,22 @@
   // Signature stays fixed while bio rises toward it, then they lock and scroll together
   (function () {
     if (window.innerWidth < 768) return;
-    var hc       = document.querySelector('.hero-content');
-    var about    = document.getElementById('about');
-    var BOT      = 56;
-    var attached = false;
-    var attachY  = 0;
+    var hc    = document.querySelector('.hero-content');
+    var about = document.getElementById('about');
+    var BOT   = 56;
 
     function update() {
-      var scrollY    = window.scrollY || window.pageYOffset;
-      if (attached) {
-        hc.style.bottom = (BOT + scrollY - attachY) + 'px';
-        return;
-      }
-      // Trigger when the first line of bio text reaches the signature's bottom edge
       var bioTextTop = about.getBoundingClientRect().top + 64;
-      if (bioTextTop <= window.innerHeight - BOT) {
-        attached = true;
-        attachY  = scrollY;
+      var sigBottom  = window.innerHeight - BOT;
+      if (bioTextTop > sigBottom) {
+        hc.style.bottom = BOT + 'px';
+      } else {
+        hc.style.bottom = (BOT + (sigBottom - bioTextTop)) + 'px';
       }
+      requestAnimationFrame(update);
     }
 
-    window.addEventListener('scroll', update, { passive: true });
-    update();
+    requestAnimationFrame(update);
   }());
 </script>
 </body>
