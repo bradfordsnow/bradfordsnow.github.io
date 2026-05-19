@@ -585,7 +585,8 @@
       <div class="logo-item" data-name="Ford"><img src="https://cdn.simpleicons.org/ford/ffffff" alt="Ford" style="height:34px;"></div>
       <div class="logo-item" data-name="Netflix"><img src="https://cdn.simpleicons.org/netflix/ffffff" alt="Netflix" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Facebook"><img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook"></div>
-      <div class="logo-item" data-name="Chipotle"><span class="logo-word">Chipotle</span></div>
+      <div class="logo-item" data-name="Chipotle"><img class="local" src="chipotle-circle.svg" alt="Chipotle" style="height:32px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Comedy Central"><img src="https://cdn.simpleicons.org/comedycentral/ffffff" alt="Comedy Central" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Hilton"><img src="https://cdn.simpleicons.org/hilton/ffffff" alt="Hilton" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Meta"><img src="https://cdn.simpleicons.org/meta/ffffff" alt="Meta"></div>
       <div class="logo-item" data-name="FOX"><img class="local" src="fox.svg" alt="FOX" style="height:13px;" onerror="this.parentElement.style.display='none'"></div>
@@ -623,9 +624,9 @@
     var thumb  = reel.querySelector('.thumb');
     var amount = thumb ? thumb.offsetWidth + 8 : 340;
     var max    = reel.scrollWidth - reel.clientWidth;
-    if (dir > 0 && reel.scrollLeft >= max - 4) {
+    if (dir > 0 && reel.scrollLeft + amount >= max - 4) {
       reel.scrollTo({ left: 0, behavior: 'smooth' });
-    } else if (dir < 0 && reel.scrollLeft <= 4) {
+    } else if (dir < 0 && reel.scrollLeft <= amount + 4) {
       reel.scrollTo({ left: max, behavior: 'smooth' });
     } else {
       reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
