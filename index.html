@@ -194,7 +194,7 @@
     cursor: pointer;
     font-family: inherit;
     font-size: 22px;
-    transition: color 0.2s;
+    transition: color 0.2s, opacity 0.2s;
     padding: 0;
   }
 
@@ -619,41 +619,26 @@
   ];
   let currentVideo = 0;
 
-  // Shared reel state — must be accessible to reelScroll and the clone setup
-  var reel       = document.getElementById('grid-reel');
-  var reelOneSet = 0;
+  var reel = document.getElementById('grid-reel');
+  var arrowL = document.querySelector('.reel-arrow.left');
+  var arrowR = document.querySelector('.reel-arrow.right');
 
   function reelScroll(dir) {
     var thumb  = reel.querySelector('.thumb');
     var amount = thumb ? thumb.offsetWidth + 8 : 340;
-    // Preemptively jump one set so the smooth scroll always has room in both directions
-    if (reelOneSet) {
-      var next = reel.scrollLeft + dir * amount;
-      if (next < reelOneSet)          reel.scrollLeft += reelOneSet;
-      else if (next >= reelOneSet * 2) reel.scrollLeft -= reelOneSet;
-    }
     reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
 
-  // Infinite clone loop — [clones][originals][clones], start in the middle
-  (function () {
-    var originals = Array.from(reel.querySelectorAll('.thumb'));
-    var pre = document.createDocumentFragment();
-    originals.forEach(function (t) { pre.appendChild(t.cloneNode(true)); });
-    reel.insertBefore(pre, reel.firstChild);
-    originals.forEach(function (t) { reel.appendChild(t.cloneNode(true)); });
+  function updateArrows() {
+    arrowL.style.opacity        = reel.scrollLeft <= 4 ? '0' : '1';
+    arrowL.style.pointerEvents  = reel.scrollLeft <= 4 ? 'none' : '';
+    var atEnd = reel.scrollLeft >= reel.scrollWidth - reel.clientWidth - 4;
+    arrowR.style.opacity        = atEnd ? '0' : '1';
+    arrowR.style.pointerEvents  = atEnd ? 'none' : '';
+  }
 
-    requestAnimationFrame(function () {
-      reelOneSet     = reel.scrollWidth / 3;
-      reel.scrollLeft = reelOneSet;
-
-      // Handle swipe / momentum scroll on mobile
-      reel.addEventListener('scroll', function () {
-        if (reel.scrollLeft < reelOneSet)           reel.scrollLeft += reelOneSet;
-        else if (reel.scrollLeft >= reelOneSet * 2)  reel.scrollLeft -= reelOneSet;
-      }, { passive: true });
-    });
-  }());
+  reel.addEventListener('scroll', updateArrows, { passive: true });
+  updateArrows();
   function openLight(index) {
     currentVideo = index;
     document.getElementById('lightbox-iframe').src = videos[currentVideo];
