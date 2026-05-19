@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Format Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0b0b0b;
+    color: #d8d4cc;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+  }
+
+  .page-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.22);
+    padding: 48px 72px 56px;
+  }
+
+  .option {
+    padding: 0 72px 80px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 40px;
+  }
+
+  .option-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.22);
+    margin-bottom: 6px;
+  }
+
+  .option-desc {
+    font-size: 12px;
+    color: rgba(216,212,204,0.3);
+    letter-spacing: 0.04em;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* ── Shared thumbnail card ── */
+  .thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: #161616;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s;
+  }
+
+  .thumb .no-thumb {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.2);
+  }
+
+  .thumb .play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: rgba(0,0,0,0.35);
+  }
+
+  .thumb:hover .play { opacity: 1; }
+  .thumb:hover img { opacity: 0.75; }
+
+  .play-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(216,212,204,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .play-icon svg {
+    width: 14px;
+    height: 14px;
+    fill: rgba(216,212,204,0.85);
+    margin-left: 2px;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 1 — Thumbnail grid → Lightbox
+  ═══════════════════════════════════════ */
+
+  .grid-reel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .lightbox.open { display: flex; }
+
+  .lightbox-inner {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 16/9;
+  }
+
+  .lightbox-inner iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: -36px;
+    right: 0;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.4);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-weight: 300;
+  }
+
+  .lightbox-close:hover { color: rgba(216,212,204,0.75); }
+
+  /* ═══════════════════════════════════════
+     OPTION 2 — Carousel
+  ═══════════════════════════════════════ */
+
+  .carousel-wrap {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .carousel-main {
+    flex: 1;
+    position: relative;
+  }
+
+  .carousel-main .thumb { cursor: default; }
+
+  .carousel-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(216,212,204,0.15);
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+  }
+
+  .carousel-btn:hover { border-color: rgba(216,212,204,0.4); }
+
+  .carousel-btn svg {
+    width: 12px;
+    height: 12px;
+    stroke: rgba(216,212,204,0.5);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .carousel-btn:hover svg { stroke: rgba(216,212,204,0.85); }
+
+  .carousel-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+
+  .carousel-counter {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(216,212,204,0.25);
+  }
+
+  .carousel-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .carousel-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(216,212,204,0.15);
+    display: block;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+
+  .carousel-dots span.active { background: rgba(216,212,204,0.5); }
+
+  .carousel-play-btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION 3 — Featured + strip
+  ═══════════════════════════════════════ */
+
+  .featured-main {
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .featured-main .thumb { cursor: default; }
+
+  .featured-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .featured-strip .thumb {
+    opacity: 0.45;
+    transition: opacity 0.2s;
+    border-color: transparent;
+  }
+
+  .featured-strip .thumb:hover { opacity: 0.7; }
+  .featured-strip .thumb.active {
+    opacity: 1;
+    border-color: rgba(216,212,204,0.2);
+  }
+
+  .featured-strip .play { display: none; }
+
+  /* ═══════════════════════════════════════
+     OPTION 4 — Horizontal scroll
+  ═══════════════════════════════════════ */
+
+  .scroll-reel {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    margin: 0 -72px;
+    padding: 0 72px;
+    padding-right: 72px;
+  }
+
+  .scroll-reel::-webkit-scrollbar { display: none; }
+
+  .scroll-reel .thumb {
+    flex: 0 0 auto;
+    width: 38vw;
+    max-width: 480px;
+    min-width: 240px;
+    scroll-snap-align: start;
+  }
+
+  .scroll-note {
+    margin-top: 14px;
+    font-size: 10px;
+    color: rgba(216,212,204,0.22);
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+
+<p class="page-label">Reel Format Options</p>
+
+<!-- ══════════════════════════════════════
+     OPTION 1 — Thumbnail grid → Lightbox
+══════════════════════════════════════ -->
+<div class="option">
+  <div class="option-label">1 &nbsp;—&nbsp; Thumbnail grid → lightbox</div>
+  <div class="option-desc">Thumbnails only on page — clicking opens a full overlay with the video. One video at a time, guaranteed. Fast load.</div>
+
+  <div class="grid-reel" id="grid1">
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/hh_vfP-5f9o?autoplay=1')">
+      <img src="https://img.youtube.com/vi/hh_vfP-5f9o/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.ispot.tv/embed/Zh4w')">
+      <div class="no-thumb">Kinder Joy</div>
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/K3JeMnRY8uE?autoplay=1')">
+      <img src="https://img.youtube.com/vi/K3JeMnRY8uE/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.ispot.tv/embed/bJGe')">
+      <div class="no-thumb">Ad Spot</div>
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/8oNX99U-m98?autoplay=1')">
+      <img src="https://img.youtube.com/vi/8oNX99U-m98/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/NeOob7xvdnA?autoplay=1')">
+      <img src="https://img.youtube.com/vi/NeOob7xvdnA/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLight(event)">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" onclick="closeLight()">Close</button>
+    <iframe id="lightbox-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OPTION 2 — Carousel
+══════════════════════════════════════ -->
+<div class="option">
+  <div class="option-label">2 &nbsp;—&nbsp; Carousel — one at a time</div>
+  <div class="option-desc">Arrow through videos one by one. Single video loads at a time. Focused, deliberate viewing.</div>
+
+  <div class="carousel-wrap">
+    <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous">
+      <svg viewBox="0 0 12 12"><polyline points="8,1 3,6 8,11"/></svg>
+    </button>
+    <div class="carousel-main" id="carousel-main">
+      <!-- filled by JS -->
+    </div>
+    <button class="carousel-btn" onclick="carouselNext()" aria-label="Next">
+      <svg viewBox="0 0 12 12"><polyline points="4,1 9,6 4,11"/></svg>
+    </button>
+  </div>
+  <div class="carousel-meta">
+    <span class="carousel-counter" id="carousel-counter">1 / 6</span>
+    <div class="carousel-dots" id="carousel-dots"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OPTION 3 — Featured + strip
+══════════════════════════════════════ -->
+<div class="option">
+  <div class="option-label">3 &nbsp;—&nbsp; Featured player + thumbnail strip</div>
+  <div class="option-desc">One large player up top, thumbnail strip below to select. Click a thumbnail to swap the main player. Common broadcast reel format.</div>
+
+  <div class="featured-main">
+    <div class="thumb" id="featured-main-thumb" style="cursor:default;">
+      <img id="featured-img" src="https://img.youtube.com/vi/hh_vfP-5f9o/hqdefault.jpg" alt="">
+      <div class="play" id="featured-play" style="opacity:1; background:rgba(0,0,0,0.2); cursor:pointer;" onclick="openFeaturedLight()">
+        <div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div>
+      </div>
+    </div>
+  </div>
+  <div class="featured-strip" id="featured-strip">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OPTION 4 — Horizontal scroll
+══════════════════════════════════════ -->
+<div class="option">
+  <div class="option-label">4 &nbsp;—&nbsp; Horizontal scroll (current format)</div>
+  <div class="option-desc">Swipeable row of thumbnails. Clicking opens the video. Adding pause-others logic is ~15 lines of JS and handles the multi-play issue for YouTube. iSpot would open in a new tab.</div>
+
+  <div class="scroll-reel">
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/hh_vfP-5f9o?autoplay=1')">
+      <img src="https://img.youtube.com/vi/hh_vfP-5f9o/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.ispot.tv/embed/Zh4w')">
+      <div class="no-thumb">Kinder Joy</div>
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/K3JeMnRY8uE?autoplay=1')">
+      <img src="https://img.youtube.com/vi/K3JeMnRY8uE/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.ispot.tv/embed/bJGe')">
+      <div class="no-thumb">Ad Spot</div>
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/8oNX99U-m98?autoplay=1')">
+      <img src="https://img.youtube.com/vi/8oNX99U-m98/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+    <div class="thumb" onclick="openLight('https://www.youtube.com/embed/NeOob7xvdnA?autoplay=1')">
+      <img src="https://img.youtube.com/vi/NeOob7xvdnA/hqdefault.jpg" alt="">
+      <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+    </div>
+  </div>
+  <p class="scroll-note">↑ Scroll right to see more. Click any thumbnail to watch.</p>
+</div>
+
+<script>
+  const videos = [
+    { src: 'https://www.youtube.com/embed/hh_vfP-5f9o?autoplay=1', thumb: 'https://img.youtube.com/vi/hh_vfP-5f9o/hqdefault.jpg' },
+    { src: 'https://www.ispot.tv/embed/Zh4w', thumb: null, label: 'Kinder Joy' },
+    { src: 'https://www.youtube.com/embed/K3JeMnRY8uE?autoplay=1', thumb: 'https://img.youtube.com/vi/K3JeMnRY8uE/hqdefault.jpg' },
+    { src: 'https://www.ispot.tv/embed/bJGe', thumb: null, label: 'Ad Spot' },
+    { src: 'https://www.youtube.com/embed/8oNX99U-m98?autoplay=1', thumb: 'https://img.youtube.com/vi/8oNX99U-m98/hqdefault.jpg' },
+    { src: 'https://www.youtube.com/embed/NeOob7xvdnA?autoplay=1', thumb: 'https://img.youtube.com/vi/NeOob7xvdnA/hqdefault.jpg' },
+  ];
+
+  /* ── Lightbox ── */
+  function openLight(src) {
+    document.getElementById('lightbox-iframe').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLight(e) {
+    if (e && e.target !== document.getElementById('lightbox') && !e.target.classList.contains('lightbox-close')) return;
+    document.getElementById('lightbox-iframe').src = '';
+    document.getElementById('lightbox').classList.remove('open');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLight({}); });
+  // make close button work
+  document.querySelector('.lightbox-close').addEventListener('click', () => {
+    document.getElementById('lightbox-iframe').src = '';
+    document.getElementById('lightbox').classList.remove('open');
+  });
+
+  /* ── Carousel ── */
+  let carIdx = 0;
+
+  function buildCarousel() {
+    const main = document.getElementById('carousel-main');
+    const dotsEl = document.getElementById('carousel-dots');
+    const v = videos[carIdx];
+
+    main.innerHTML = `
+      <div class="thumb" style="cursor:pointer;" onclick="openLight('${v.src}')">
+        ${v.thumb
+          ? `<img src="${v.thumb}" alt="">`
+          : `<div class="no-thumb">${v.label || 'Ad Spot'}</div>`}
+        <div class="play" style="opacity:1; background:rgba(0,0,0,0.2);">
+          <div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12" fill="rgba(216,212,204,0.85)"/></svg></div>
+        </div>
+      </div>`;
+
+    document.getElementById('carousel-counter').textContent = `${carIdx + 1} / ${videos.length}`;
+
+    dotsEl.innerHTML = videos.map((_, i) =>
+      `<span class="${i === carIdx ? 'active' : ''}" onclick="carouselGo(${i})"></span>`
+    ).join('');
+  }
+
+  function carouselPrev() { carIdx = (carIdx - 1 + videos.length) % videos.length; buildCarousel(); }
+  function carouselNext() { carIdx = (carIdx + 1) % videos.length; buildCarousel(); }
+  function carouselGo(i) { carIdx = i; buildCarousel(); }
+  buildCarousel();
+
+  /* ── Featured + strip ── */
+  let featuredIdx = 0;
+
+  function buildStrip() {
+    const strip = document.getElementById('featured-strip');
+    strip.innerHTML = videos.map((v, i) => `
+      <div class="thumb ${i === featuredIdx ? 'active' : ''}" onclick="setFeatured(${i})">
+        ${v.thumb
+          ? `<img src="${v.thumb}" alt="">`
+          : `<div class="no-thumb" style="font-size:8px;">${v.label || 'Ad'}</div>`}
+      </div>`
+    ).join('');
+  }
+
+  function setFeatured(i) {
+    featuredIdx = i;
+    const v = videos[i];
+    const img = document.getElementById('featured-img');
+    if (v.thumb) {
+      img.src = v.thumb;
+      img.style.display = 'block';
+      img.parentElement.querySelector('.no-thumb') && (img.parentElement.querySelector('.no-thumb').remove());
+    } else {
+      img.style.display = 'none';
+      if (!img.parentElement.querySelector('.no-thumb')) {
+        const d = document.createElement('div');
+        d.className = 'no-thumb';
+        d.textContent = v.label || 'Ad Spot';
+        img.parentElement.insertBefore(d, img);
+      }
+    }
+    buildStrip();
+  }
+
+  function openFeaturedLight() {
+    openLight(videos[featuredIdx].src);
+  }
+
+  buildStrip();
+</script>
+</body>
+</html>

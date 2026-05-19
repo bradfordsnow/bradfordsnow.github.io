@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thumbnail Picker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0b0b0b; color: #d8d4cc; font-family: 'Inter', sans-serif; font-weight: 300; padding: 48px; }
+  h1 { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(216,212,204,0.25); margin-bottom: 56px; }
+  .video-block { margin-bottom: 64px; }
+  .video-title { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(216,212,204,0.5); margin-bottom: 24px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 20px; }
+  .thumb-item { display: flex; flex-direction: column; gap: 8px; cursor: pointer; }
+  .thumb-item img { width: 280px; height: 158px; object-fit: cover; border: 2px solid transparent; transition: border-color 0.15s; display: block; background: #1a1a1a; }
+  .thumb-item:hover img { border-color: rgba(216,212,204,0.4); }
+  .thumb-item.selected img { border-color: rgba(216,212,204,0.9); }
+  .thumb-item.broken { opacity: 0.2; pointer-events: none; }
+  .label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(216,212,204,0.35); }
+  .label span { color: rgba(216,212,204,0.18); font-size: 8px; }
+  .note { font-size: 11px; color: rgba(216,212,204,0.3); margin-top: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<h1>Thumbnail Picker &mdash; click to mark your choice</h1>
+
+<!-- Ford Ranger -->
+<div class="video-block">
+  <div class="video-title">Ford Ranger &nbsp;<span style="color:rgba(216,212,204,0.2);font-size:8px;letter-spacing:0.1em;">hh_vfP-5f9o</span></div>
+  <div class="thumbs" id="ford"></div>
+</div>
+
+<!-- NBA -->
+<div class="video-block">
+  <div class="video-title">NBA &nbsp;<span style="color:rgba(216,212,204,0.2);font-size:8px;letter-spacing:0.1em;">NeOob7xvdnA</span></div>
+  <div class="thumbs" id="nba"></div>
+</div>
+
+<!-- Nike -->
+<div class="video-block">
+  <div class="video-title">Nike &nbsp;<span style="color:rgba(216,212,204,0.2);font-size:8px;letter-spacing:0.1em;">xLDyoDkXO-s</span></div>
+  <div class="thumbs" id="nike"></div>
+</div>
+
+<script>
+const variants = [
+  { key: 'maxresdefault', label: 'maxresdefault', res: '1280×720' },
+  { key: 'sddefault',     label: 'sddefault',     res: '640×480'  },
+  { key: 'hqdefault',     label: 'hqdefault',     res: '480×360'  },
+  { key: 'mqdefault',     label: 'mqdefault',     res: '320×180'  },
+  { key: '0',             label: 'frame 0',       res: '480×360'  },
+  { key: '1',             label: 'frame 1',       res: '120×90'   },
+  { key: '2',             label: 'frame 2',       res: '120×90'   },
+  { key: '3',             label: 'frame 3',       res: '120×90'   },
+];
+
+const videos = [
+  { id: 'hh_vfP-5f9o', container: 'ford'  },
+  { id: 'NeOob7xvdnA', container: 'nba'   },
+  { id: 'xLDyoDkXO-s', container: 'nike'  },
+];
+
+videos.forEach(function(v) {
+  var wrap = document.getElementById(v.container);
+  variants.forEach(function(t) {
+    var url = 'https://img.youtube.com/vi/' + v.id + '/' + t.key + '.jpg';
+    var item = document.createElement('div');
+    item.className = 'thumb-item';
+    item.dataset.url = url;
+    item.dataset.key = t.key;
+    item.dataset.video = v.container;
+
+    var img = document.createElement('img');
+    img.src = url;
+    img.alt = t.label;
+    img.onerror = function() { item.classList.add('broken'); };
+
+    var lbl = document.createElement('div');
+    lbl.className = 'label';
+    lbl.innerHTML = t.label + ' <span>' + t.res + '</span>';
+
+    item.appendChild(img);
+    item.appendChild(lbl);
+    item.addEventListener('click', function() {
+      wrap.querySelectorAll('.thumb-item').forEach(function(el) { el.classList.remove('selected'); });
+      item.classList.add('selected');
+      console.log(v.container + ': ' + url);
+    });
+    wrap.appendChild(item);
+  });
+});
+</script>
+</body>
+</html>

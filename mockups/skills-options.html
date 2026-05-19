@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skills Section Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0b0b0b;
+    color: #d8d4cc;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    padding: 72px;
+  }
+
+  .page-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.22);
+    margin-bottom: 64px;
+  }
+
+  .option {
+    margin-bottom: 72px;
+    max-width: 460px;
+  }
+
+  .option-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.22);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* ── A: Left-aligned inline dots ── */
+  .a-skills {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.45);
+    line-height: 2.4;
+  }
+
+  .a-skills .sk::after {
+    content: "\00a0·\00a0\200B";
+    color: rgba(216,212,204,0.2);
+  }
+
+  .a-skills .sk:last-child::after {
+    content: "";
+  }
+
+  /* ── B: Two-column grid ── */
+  .b-skills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+  }
+
+  .b-skills .sk {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.45);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .b-skills .sk::before {
+    content: "·";
+    color: rgba(216,212,204,0.2);
+    flex-shrink: 0;
+  }
+
+  /* ── C: Single column, spaced list ── */
+  .c-skills {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .c-skills .sk {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.45);
+    line-height: 2.2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .c-skills .sk::before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 1px;
+    background: rgba(216,212,204,0.18);
+    flex-shrink: 0;
+  }
+
+  /* ── D: Prose / comma-separated ── */
+  .d-skills {
+    font-size: 13px;
+    line-height: 1.85;
+    color: rgba(216,212,204,0.38);
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── E: Two-column, no bullets, clean ── */
+  .e-skills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .e-skills .sk {
+    font-size: 9.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.38);
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .e-skills .sk:nth-child(odd) {
+    padding-right: 24px;
+    border-right: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .e-skills .sk:nth-child(even) {
+    padding-left: 24px;
+  }
+</style>
+</head>
+<body>
+
+<p class="page-label">Skills Section — Layout Options</p>
+
+<!-- Option A -->
+<div class="option">
+  <div class="option-label">A &nbsp;—&nbsp; Inline · left-aligned, single dot</div>
+  <p class="a-skills">
+    <span class="sk">Mixing</span><span class="sk">Mastering</span><span class="sk">Production</span><span class="sk">Co&#8209;Writing</span><span class="sk">Composition</span><span class="sk">Arrangement</span><span class="sk">Engineering</span><span class="sk">Sound&nbsp;Design</span><span class="sk">VO&nbsp;Recording</span><span class="sk">Orchestration</span><span class="sk">Vocal&nbsp;Production</span><span class="sk">Sync&nbsp;Licensing</span><span class="sk">Musical&nbsp;Direction</span><span class="sk">Instrument&nbsp;Performance&nbsp;&amp;&nbsp;Tracking</span>
+  </p>
+</div>
+
+<!-- Option B -->
+<div class="option">
+  <div class="option-label">B &nbsp;—&nbsp; Two-column grid, dot prefix</div>
+  <div class="b-skills">
+    <span class="sk">Mixing</span>
+    <span class="sk">Sound&nbsp;Design</span>
+    <span class="sk">Mastering</span>
+    <span class="sk">VO&nbsp;Recording</span>
+    <span class="sk">Production</span>
+    <span class="sk">Orchestration</span>
+    <span class="sk">Co&#8209;Writing</span>
+    <span class="sk">Vocal&nbsp;Production</span>
+    <span class="sk">Composition</span>
+    <span class="sk">Sync&nbsp;Licensing</span>
+    <span class="sk">Arrangement</span>
+    <span class="sk">Musical&nbsp;Direction</span>
+    <span class="sk">Engineering</span>
+    <span class="sk">Instrument&nbsp;Performance &amp; Tracking</span>
+  </div>
+</div>
+
+<!-- Option C -->
+<div class="option">
+  <div class="option-label">C &nbsp;—&nbsp; Single column, rule prefix</div>
+  <div class="c-skills">
+    <span class="sk">Mixing</span>
+    <span class="sk">Mastering</span>
+    <span class="sk">Production</span>
+    <span class="sk">Co&#8209;Writing</span>
+    <span class="sk">Composition</span>
+    <span class="sk">Arrangement</span>
+    <span class="sk">Engineering</span>
+    <span class="sk">Sound Design</span>
+    <span class="sk">VO Recording</span>
+    <span class="sk">Orchestration</span>
+    <span class="sk">Vocal Production</span>
+    <span class="sk">Sync Licensing</span>
+    <span class="sk">Musical Direction</span>
+    <span class="sk">Instrument Performance &amp; Tracking</span>
+  </div>
+</div>
+
+<!-- Option D -->
+<div class="option">
+  <div class="option-label">D &nbsp;—&nbsp; Prose, italic, lowercase</div>
+  <p class="d-skills">Mixing, mastering, production, co&#8209;writing, composition, arrangement, engineering, sound design, VO recording, orchestration, vocal production, sync licensing, musical direction, and instrument performance &amp; tracking.</p>
+</div>
+
+<!-- Option E -->
+<div class="option" style="max-width:460px;">
+  <div class="option-label">E &nbsp;—&nbsp; Two-column ruled grid, no prefix</div>
+  <div class="e-skills">
+    <span class="sk">Mixing</span>
+    <span class="sk">Sound&nbsp;Design</span>
+    <span class="sk">Mastering</span>
+    <span class="sk">VO&nbsp;Recording</span>
+    <span class="sk">Production</span>
+    <span class="sk">Orchestration</span>
+    <span class="sk">Co&#8209;Writing</span>
+    <span class="sk">Vocal&nbsp;Production</span>
+    <span class="sk">Composition</span>
+    <span class="sk">Sync&nbsp;Licensing</span>
+    <span class="sk">Arrangement</span>
+    <span class="sk">Musical&nbsp;Direction</span>
+    <span class="sk">Engineering</span>
+    <span class="sk">Instrument&nbsp;Performance &amp; Tracking</span>
+  </div>
+</div>
+
+</body>
+</html>

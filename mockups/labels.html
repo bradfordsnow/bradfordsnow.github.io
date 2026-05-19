@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0b0b0b;
+    color: #d8d4cc;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    padding: 64px 72px;
+  }
+
+  h2 {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.25);
+    margin-bottom: 28px;
+  }
+
+  .block {
+    max-width: 520px;
+    margin-bottom: 72px;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin: 56px 0;
+  }
+
+  /* shared bio text */
+  .text {
+    font-size: 14px;
+    line-height: 1.85;
+    color: rgba(216,212,204,0.68);
+  }
+
+  .text p + p { margin-top: 16px; }
+
+  /* ── Option 1: label on its own line above paragraph ── */
+  .opt1-label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.32);
+    margin-bottom: 6px;
+  }
+
+  /* ── Option 2: inline, same size, italic, em-dash ── */
+  .opt2-label {
+    font-style: italic;
+    color: rgba(216,212,204,0.45);
+  }
+
+  /* ── Option 3: two-column — label floats left ── */
+  .opt3-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .opt3-label {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.3);
+    padding-top: 3px;
+    text-align: right;
+  }
+
+  /* ── Option 4: left border ── */
+  .opt4-p {
+    border-left: 1px solid rgba(216,212,204,0.15);
+    padding-left: 16px;
+    margin-bottom: 16px;
+  }
+  .opt4-label {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.32);
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Option 1 -->
+  <div class="block">
+    <h2>Option 1 — Label on own line</h2>
+    <div class="text">
+      <p>Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <p style="margin-top:20px;">
+        <span class="opt1-label">Scoring</span>
+        Film, television, and podcast credits include <em>Tuca & Bertie</em> (Netflix), <em>The Bakken</em> (Amazon Prime), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands (Nike, Google, NBA, etc.), airing across ABC, CBS, NBC, FOX, CW, and Amazon.
+      </p>
+      <p style="margin-top:20px;">
+        <span class="opt1-label">Artists</span>
+        His production credits span pop and independent music — Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man).
+      </p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Option 2 -->
+  <div class="block">
+    <h2>Option 2 — Italic inline</h2>
+    <div class="text">
+      <p>Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <p><span class="opt2-label">Scoring —</span> Film, television, and podcast credits include <em>Tuca & Bertie</em> (Netflix), <em>The Bakken</em> (Amazon Prime), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands (Nike, Google, NBA, etc.), airing across ABC, CBS, NBC, FOX, CW, and Amazon.</p>
+      <p><span class="opt2-label">Artists —</span> His production credits span pop and independent music — Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man).</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Option 3 -->
+  <div class="block" style="max-width:580px;">
+    <h2>Option 3 — Label column left, text right</h2>
+    <div class="text">
+      <p style="margin-bottom:20px;">Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <div class="opt3-row">
+        <div class="opt3-label">Scoring</div>
+        <div>Film, television, and podcast credits include <em>Tuca & Bertie</em> (Netflix), <em>The Bakken</em> (Amazon Prime), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands (Nike, Google, NBA, etc.), airing across ABC, CBS, NBC, FOX, CW, and Amazon.</div>
+      </div>
+      <div class="opt3-row">
+        <div class="opt3-label">Artists</div>
+        <div>His production credits span pop and independent music — Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man).</div>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Option 4 -->
+  <div class="block">
+    <h2>Option 4 — Left border accent</h2>
+    <div class="text">
+      <p style="margin-bottom:20px;">Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <div class="opt4-p">
+        <div class="opt4-label">Scoring</div>
+        Film, television, and podcast credits include <em>Tuca & Bertie</em> (Netflix), <em>The Bakken</em> (Amazon Prime), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands (Nike, Google, NBA, etc.), airing across ABC, CBS, NBC, FOX, CW, and Amazon.
+      </div>
+      <div class="opt4-p">
+        <div class="opt4-label">Artists</div>
+        His production credits span pop and independent music — Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man).
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
