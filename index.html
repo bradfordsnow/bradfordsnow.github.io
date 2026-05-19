@@ -15,27 +15,28 @@
     font-weight: 300;
   }
 
-  /* ── Instagram corner ── */
-  .ig-corner {
-    position: fixed;
-    top: 32px;
-    right: 40px;
-    z-index: 100;
-  }
-
-  .ig-corner a {
-    display: block;
+  /* ── Instagram footer link ── */
+  .ig-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     opacity: 0.35;
     transition: opacity 0.2s;
+    text-decoration: none;
+    color: inherit;
   }
 
-  .ig-corner a:hover {
-    opacity: 0.65;
-  }
+  .ig-link:hover { opacity: 0.65; }
 
-  .ig-corner img {
-    height: 18px;
+  .ig-link img {
+    height: 13px;
     width: auto;
+  }
+
+  .ig-link span {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
   }
 
   /* ── Hero ── */
@@ -399,6 +400,9 @@
     color: rgba(216,212,204,0.23);
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   /* ── Mobile ── */
@@ -435,11 +439,6 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-    }
-
-    .ig-corner {
-      top: 20px;
-      right: 20px;
     }
 
     /* Tighten section padding */
@@ -482,12 +481,6 @@
 </style>
 </head>
 <body>
-
-  <div class="ig-corner">
-    <a href="https://www.instagram.com/bradfordsnow/" target="_blank">
-      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram" onerror="this.style.display='none'">
-    </a>
-  </div>
 
   <!-- Hero -->
   <section class="hero">
@@ -598,6 +591,10 @@
 
   <footer>
     <span>© Bradford Snow 2026</span>
+    <a class="ig-link" href="https://www.instagram.com/bradfordsnow/" target="_blank">
+      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="">
+      <span>Instagram</span>
+    </a>
   </footer>
 
 <script>
