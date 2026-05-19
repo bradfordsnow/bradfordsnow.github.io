@@ -630,11 +630,14 @@
   }
 
   function updateArrows() {
-    arrowL.style.opacity        = reel.scrollLeft <= 4 ? '0' : '1';
-    arrowL.style.pointerEvents  = reel.scrollLeft <= 4 ? 'none' : '';
-    var atEnd = reel.scrollLeft >= reel.scrollWidth - reel.clientWidth - 4;
-    arrowR.style.opacity        = atEnd ? '0' : '1';
-    arrowR.style.pointerEvents  = atEnd ? 'none' : '';
+    var thumbs    = reel.querySelectorAll('.thumb');
+    var lastThumb = thumbs[thumbs.length - 1];
+    var atStart   = reel.scrollLeft <= 4;
+    var atEnd     = reel.scrollLeft >= lastThumb.offsetLeft - 4;
+    arrowL.style.opacity       = atStart ? '0' : '1';
+    arrowL.style.pointerEvents = atStart ? 'none' : '';
+    arrowR.style.opacity       = atEnd ? '0' : '1';
+    arrowR.style.pointerEvents = atEnd ? 'none' : '';
   }
 
   reel.addEventListener('scroll', updateArrows, { passive: true });
