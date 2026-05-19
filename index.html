@@ -126,6 +126,7 @@
     grid-template-columns: max-content max-content max-content;
     gap: 10px 28px;
     margin-top: 18px;
+    margin-left: 8px;
   }
 
   .skills-grid .sk {
@@ -136,7 +137,9 @@
   }
 
   .skills-grid .sk::before {
-    content: none;
+    content: '·';
+    margin-right: 7px;
+    opacity: 0.6;
   }
 
   /* ── Scroll sections ── */
@@ -451,6 +454,7 @@
     /* Skills: 2 columns so 3rd doesn't overflow */
     .skills-grid {
       grid-template-columns: max-content max-content;
+      gap: 10px 44px;
     }
 
     /* Video thumbs: wide enough to feel like a proper reel */
@@ -504,20 +508,18 @@
       <p><span class="bio-label">Artist Recording & Production</span> His production credits cover pop and independent music, including Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man). He has also toured as a multi-instrumentalist band member with Juliette Lewis, The Hush Sound, and Company of Thieves.</p>
       <p>Based at his Pasadena studio, he works with artists, agencies, and directors from early concept to final master.</p>
       <div class="skills-grid">
-        <span class="sk">Mixing</span>
-        <span class="sk">Sound Design</span>
-        <span class="sk">Mastering</span>
-        <span class="sk">VO Recording</span>
-        <span class="sk">Production</span>
-        <span class="sk">Orchestration</span>
-        <span class="sk">Co&#8209;Writing</span>
-        <span class="sk">Vocal Production</span>
         <span class="sk">Composition</span>
-        <span class="sk">Sync Licensing</span>
+        <span class="sk">Production</span>
+        <span class="sk">Mixing</span>
+        <span class="sk">Mastering</span>
+        <span class="sk">Sound Design</span>
+        <span class="sk">Voice Over</span>
+        <span class="sk">Orchestration</span>
+        <span class="sk">Co&#8209;Write</span>
+        <span class="sk">Sync License</span>
         <span class="sk">Arrangement</span>
-        <span class="sk">Musical Direction</span>
+        <span class="sk">Musical Dir.</span>
         <span class="sk">Engineering</span>
-        <span class="sk">Performance</span>
       </div>
     </div>
   </section>
