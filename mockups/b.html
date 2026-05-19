@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup B</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0e0e0e;
+    color: #d8d4cc;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    position: relative;
+  }
+
+  .bg-photo {
+    position: fixed; inset: 0;
+    background: url('photo.jpeg') center 20% / cover no-repeat;
+    opacity: 0.07; pointer-events: none; z-index: 0;
+  }
+
+  /* ── Instagram corner ── */
+  .ig-corner { position: fixed; top: 32px; right: 40px; z-index: 100; }
+  .ig-corner a { display: block; opacity: 0.35; transition: opacity 0.2s; }
+  .ig-corner a:hover { opacity: 0.65; }
+  .ig-corner img { height: 18px; width: auto; }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto;
+    padding: 96px 32px 80px;
+  }
+
+  .header { margin-bottom: 56px; }
+  .signature {
+    width: 220px; filter: brightness(0) invert(1); opacity: 0.88;
+    display: block; margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: rgba(216,212,204,0.4);
+  }
+
+  .rule { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 40px 0; }
+
+  .section-label {
+    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: rgba(216,212,204,0.28); margin-bottom: 20px;
+  }
+
+  /* ── Bio ── */
+  .bio { font-size: 14px; line-height: 1.85; color: rgba(216,212,204,0.68); }
+  .bio p + p { margin-top: 14px; }
+  .bio-label {
+    display: block; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: rgba(216,212,204,0.32); margin-bottom: 6px;
+  }
+
+  /* ── Skills ── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+    gap: 10px 28px;
+    margin-top: 18px;
+  }
+  .skills-grid .sk {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(216,212,204,0.42);
+  }
+
+  /* ── Video reel ── */
+  .reel-wrap { display: flex; align-items: center; }
+  .grid-reel {
+    flex: 1; display: flex; gap: 8px;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+  }
+  .grid-reel::-webkit-scrollbar { display: none; }
+  .grid-reel .thumb {
+    flex: 0 0 auto; width: 44%; scroll-snap-align: start;
+  }
+  .reel-arrow {
+    flex: 0 0 28px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: rgba(216,212,204,0.35);
+    cursor: pointer; font-family: inherit; font-size: 22px;
+    transition: color 0.2s; padding: 0;
+  }
+  .reel-arrow:hover { color: rgba(216,212,204,0.8); }
+  .thumb {
+    position: relative; aspect-ratio: 16/9;
+    background: #161616; border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden; cursor: pointer;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.2s; }
+  .thumb .no-thumb {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(216,212,204,0.2);
+  }
+  .thumb .play {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s; background: rgba(0,0,0,0.35);
+  }
+  .thumb:hover .play { opacity: 1; }
+  .thumb:hover img { opacity: 0.75; }
+  .play-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid rgba(216,212,204,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .play-icon svg { width: 12px; height: 12px; fill: rgba(216,212,204,0.85); margin-left: 2px; }
+
+  /* ── Lightbox ── */
+  .lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.9); z-index: 1000;
+    align-items: center; justify-content: center; padding: 40px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-inner { position: relative; width: 100%; max-width: 900px; aspect-ratio: 16/9; }
+  .lightbox-inner iframe { width: 100%; height: 100%; border: none; display: block; }
+  .lightbox-close {
+    position: absolute; top: -36px; right: 0;
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(216,212,204,0.4); cursor: pointer;
+    background: none; border: none; font-family: inherit; font-weight: 300; padding: 0;
+  }
+  .lightbox-close:hover { color: rgba(216,212,204,0.8); }
+  .lb-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: rgba(216,212,204,0.35); font-size: 52px;
+    cursor: pointer; padding: 20px 28px; line-height: 1; transition: color 0.2s; z-index: 1001;
+  }
+  .lb-arrow:hover { color: rgba(216,212,204,0.85); }
+  .lb-arrow.prev { left: 0; }
+  .lb-arrow.next { right: 0; }
+
+  /* ── Logo grid ── */
+  .logo-grid {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 36px 44px;
+  }
+  .logo-item { position: relative; display: flex; align-items: center; }
+  .logo-item img { height: 22px; width: auto; opacity: 0.38; transition: opacity 0.2s; display: block; }
+  .logo-item img.local { filter: brightness(0) invert(1); }
+  .logo-item:hover img { opacity: 0.65; }
+  .logo-item::after {
+    content: attr(data-name);
+    position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(216,212,204,0.55); white-space: nowrap;
+    opacity: 0; transition: opacity 0.18s; pointer-events: none;
+  }
+  .logo-item:hover::after { opacity: 1; }
+
+  .footer {
+    margin-top: 72px; font-size: 10px; letter-spacing: 0.12em; color: rgba(216,212,204,0.18);
+  }
+</style>
+</head>
+<body>
+  <div class="bg-photo"></div>
+
+  <div class="ig-corner">
+    <a href="https://www.instagram.com/bradfordsnow/" target="_blank">
+      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="Instagram" onerror="this.style.display='none'">
+    </a>
+  </div>
+
+  <div class="page">
+
+    <div class="header">
+      <img class="signature" src="logo.png" alt="Bradford Snow">
+      <p class="tagline">Musician &nbsp;·&nbsp; Composer &nbsp;·&nbsp; Producer</p>
+    </div>
+
+    <hr class="rule">
+
+    <div class="section-label">About</div>
+    <div class="bio">
+      <p>Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <p><span class="bio-label">Scoring, Sound &amp; Picture</span> Film, television, video games, and podcast credits include <em>Tuca &amp; Bertie</em> (Netflix), <em>The Bakken</em> (Amazon), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands across all major networks (selected credits below).</p>
+      <p><span class="bio-label">Artist Recording &amp; Production</span> His production credits span pop and independent music, including Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man). He has also toured as a multi-instrumentalist band member with Juliette Lewis, The Hush Sound, and Company of Thieves.</p>
+      <p>Based at his Pasadena studio, he works with artists, agencies, and directors from early concept to final master.</p>
+      <div class="skills-grid">
+        <span class="sk">Mixing</span>
+        <span class="sk">Sound Design</span>
+        <span class="sk">Mastering</span>
+        <span class="sk">VO Recording</span>
+        <span class="sk">Production</span>
+        <span class="sk">Orchestration</span>
+        <span class="sk">Co&#8209;Writing</span>
+        <span class="sk">Vocal Production</span>
+        <span class="sk">Composition</span>
+        <span class="sk">Sync Licensing</span>
+        <span class="sk">Arrangement</span>
+        <span class="sk">Musical Direction</span>
+        <span class="sk">Engineering</span>
+        <span class="sk">Performance</span>
+      </div>
+    </div>
+
+    <hr class="rule">
+
+    <div class="section-label">Ad Work</div>
+    <div class="reel-wrap">
+      <button class="reel-arrow" onclick="reelScroll(-1)">&#8249;</button>
+      <div class="grid-reel" id="grid-reel">
+        <div class="thumb" onclick="openLight(0)">
+          <img src="https://img.youtube.com/vi/K3JeMnRY8uE/hqdefault.jpg" alt="">
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+        <div class="thumb" onclick="openLight(1)">
+          <img src="https://img.youtube.com/vi/8oNX99U-m98/hqdefault.jpg" alt="">
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+        <div class="thumb" onclick="openLight(2)">
+          <img src="https://img.youtube.com/vi/NeOob7xvdnA/hqdefault.jpg" alt="">
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+        <div class="thumb" onclick="openLight(3)">
+          <img src="https://img.youtube.com/vi/hh_vfP-5f9o/hqdefault.jpg" alt="">
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+        <div class="thumb" onclick="openLight(4)">
+          <div class="no-thumb">Kinder Joy</div>
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+        <div class="thumb" onclick="openLight(5)">
+          <div class="no-thumb">Ad Spot</div>
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
+      </div>
+      <button class="reel-arrow" onclick="reelScroll(1)">&#8250;</button>
+    </div>
+
+    <hr class="rule">
+
+    <div class="section-label">Selected Clients</div>
+    <div class="logo-grid">
+      <div class="logo-item" data-name="Nike"><img src="https://cdn.simpleicons.org/nike/ffffff" alt="Nike"></div>
+      <div class="logo-item" data-name="NBA"><img src="https://cdn.simpleicons.org/nba/ffffff" alt="NBA"></div>
+      <div class="logo-item" data-name="Google"><img src="https://cdn.simpleicons.org/google/ffffff" alt="Google" style="height:17px;"></div>
+      <div class="logo-item" data-name="Amazon"><img class="local" src="amazon-local.svg" alt="Amazon" style="height:33px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="NBC"><img src="https://cdn.simpleicons.org/nbc/ffffff" alt="NBC" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Ford"><img src="https://cdn.simpleicons.org/ford/ffffff" alt="Ford" style="height:34px;"></div>
+      <div class="logo-item" data-name="Netflix"><img src="https://cdn.simpleicons.org/netflix/ffffff" alt="Netflix" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Facebook"><img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook"></div>
+      <div class="logo-item" data-name="Chipotle"><img class="local" src="chipotle.svg" alt="Chipotle" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Meta"><img src="https://cdn.simpleicons.org/meta/ffffff" alt="Meta"></div>
+      <div class="logo-item" data-name="FOX"><img class="local" src="fox.svg" alt="FOX" style="height:13px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Rakuten"><img src="https://cdn.simpleicons.org/rakuten/ffffff" alt="Rakuten"></div>
+      <div class="logo-item" data-name="Disney"><img class="local" src="disney.svg" alt="Disney" style="height:11px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="CBS"><img class="local" src="cbs.svg" alt="CBS" style="height:17px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Guinness"><img class="local" src="guinness.svg" alt="Guinness" style="height:23px;" onerror="this.parentElement.style.display='none'"></div>
+    </div>
+
+    <div class="footer">© Bradford Snow 2026</div>
+
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLight()">
+    <button class="lb-arrow prev" onclick="lightNav(-1)">&#8249;</button>
+    <div class="lightbox-inner">
+      <button class="lightbox-close" onclick="closeLight()">Close</button>
+      <iframe id="lightbox-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+    <button class="lb-arrow next" onclick="lightNav(1)">&#8250;</button>
+  </div>
+
+<script>
+  const videos = [
+    'https://www.youtube.com/embed/K3JeMnRY8uE?autoplay=1',
+    'https://www.youtube.com/embed/8oNX99U-m98?autoplay=1',
+    'https://www.youtube.com/embed/NeOob7xvdnA?autoplay=1',
+    'https://www.youtube.com/embed/hh_vfP-5f9o?autoplay=1',
+    'https://www.ispot.tv/embed/Zh4w',
+    'https://www.ispot.tv/embed/bJGe',
+  ];
+  let currentVideo = 0;
+  function reelScroll(dir) {
+    document.getElementById('grid-reel').scrollBy({ left: dir * 260, behavior: 'smooth' });
+  }
+  function openLight(index) {
+    currentVideo = index;
+    document.getElementById('lightbox-iframe').src = videos[currentVideo];
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function lightNav(dir) {
+    currentVideo = (currentVideo + dir + videos.length) % videos.length;
+    document.getElementById('lightbox-iframe').src = videos[currentVideo];
+  }
+  function closeLight() {
+    document.getElementById('lightbox-iframe').src = '';
+    document.getElementById('lightbox').classList.remove('open');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLight();
+    if (e.key === 'ArrowLeft') lightNav(-1);
+    if (e.key === 'ArrowRight') lightNav(1);
+  });
+</script>
+</body>
+</html>

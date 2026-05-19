@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup C</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0e0e0e;
+    color: #d8d4cc;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .left {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 42%;
+    height: 100vh;
+    background: url('photo.jpeg') 30% center / cover no-repeat;
+    z-index: 1;
+  }
+
+  .left-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+  }
+
+  .left-label {
+    position: absolute;
+    bottom: 36px;
+    left: 36px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(240,236,228,0.35);
+  }
+
+  .right {
+    margin-left: 42%;
+    width: 58%;
+    padding: 80px 64px 80px 56px;
+    min-height: 100vh;
+  }
+
+  .signature {
+    width: 200px;
+    filter: brightness(0) invert(1);
+    opacity: 0.88;
+    margin-bottom: 4px;
+  }
+
+  .tagline {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.4);
+    margin-bottom: 56px;
+  }
+
+  .rule {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 36px 0;
+  }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.3);
+    margin-bottom: 16px;
+  }
+
+  .bio {
+    font-size: 14px;
+    line-height: 1.85;
+    color: rgba(216,212,204,0.7);
+  }
+
+  .bio p + p { margin-top: 14px; }
+
+  .bio-label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.32);
+    margin-bottom: 6px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 24px;
+    list-style: disc;
+    padding-left: 14px;
+    margin-top: 18px;
+  }
+
+  .services-grid li {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: rgba(216,212,204,0.38);
+  }
+
+  .logo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 36px 44px;
+  }
+  .logo-grid img {
+    height: 20px;
+    width: auto;
+    opacity: 0.38;
+    filter: brightness(0) invert(1);
+    transition: opacity 0.2s;
+  }
+  .logo-grid img:hover {
+    opacity: 0.65;
+  }
+
+  .videos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .video-placeholder {
+    background: #181818;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.2);
+  }
+
+  .contact {
+    font-size: 13px;
+    color: rgba(216,212,204,0.4);
+  }
+
+  .contact a {
+    color: rgba(216,212,204,0.55);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(216,212,204,0.15);
+    padding-bottom: 1px;
+  }
+
+  .icons {
+    display: flex;
+    gap: 20px;
+    margin-top: 36px;
+  }
+
+  .icons a {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(216,212,204,0.25);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="left-overlay"></div>
+    <div class="left-label">Pasadena, CA</div>
+  </div>
+
+  <div class="right">
+    <img class="signature" src="logo.png" alt="Bradford Snow">
+    <p class="tagline">Musician &nbsp;·&nbsp; Composer &nbsp;·&nbsp; Producer</p>
+
+    <div class="section-label">About</div>
+    <div class="bio">
+      <p>Bradford Snow is a Los Angeles-based composer, producer, and multi-instrumentalist whose work spans artist recordings, film and television scoring, and commercial sync.</p>
+      <p><span class="bio-label">Scoring, Sound & Picture</span> Film, television, and podcast credits include <em>Tuca & Bertie</em> (Netflix), <em>The Bakken</em> (Amazon Prime), <em>The Flannoisseur</em>, <em>The Deep Vessel</em>, and chart-topping <em>Stassi</em>. He has scored hundreds of TV ads for major global brands (Nike, Google, NBA, etc.), airing across ABC, CBS, NBC, FOX, CW, and Amazon.</p>
+      <p><span class="bio-label">Artist Recording & Production</span> His production credits span pop and independent music, including Fox's <em>X Factor</em> (L.A. Reid, Britney Spears, Demi Lovato, John Shanks, The Underdogs, Toby Gad, Fifth Harmony, Camila Cabello), Jon Walker (Panic! at the Disco), Le Swish (The Hush Sound), and Los Angeles Power Disco (Cobra Man).</p>
+      <p>Based at his Pasadena studio, he works with artists, agencies, and directors from early concept to final master.</p>
+      <ul class="services-grid">
+        <li>Composing</li>
+        <li>Vocal Production</li>
+        <li>Arranging</li>
+        <li>Voice Over Recording</li>
+        <li>Co-Writing</li>
+        <li>Mixing</li>
+        <li>Record Production</li>
+        <li>Mastering</li>
+        <li>Musical Direction</li>
+      </ul>
+    </div>
+
+    <hr class="rule">
+
+    <div class="section-label">Selected Clients</div>
+    <div class="logo-grid">
+      <img src="https://cdn.simpleicons.org/nike/ffffff" alt="Nike" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/google/ffffff" alt="Google" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/nba/ffffff" alt="NBA" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/ford/ffffff" alt="Ford" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/chipotle/ffffff" alt="Chipotle" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/rakuten/ffffff" alt="Rakuten" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/meta/ffffff" alt="Meta" onerror="this.style.display='none'">
+      <img src="https://cdn.simpleicons.org/hilton/ffffff" alt="Hilton" onerror="this.style.display='none'">
+    </div>
+
+    <hr class="rule">
+
+    <div class="section-label">Work</div>
+    <div class="videos">
+      <div class="video-placeholder">Chase</div>
+      <div class="video-placeholder">Rakuten</div>
+    </div>
+
+    <hr class="rule">
+
+    <div class="icons">
+      <a href="https://www.instagram.com/bradfordsnow/">Instagram</a>
+    </div>
+  </div>
+</body>
+</html>
