@@ -559,6 +559,10 @@
           <img src="https://images-cdn.ispot.tv/ad/Zh4w/default.jpg" alt="">
           <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
         </div>
+        <div class="thumb" onclick="openLight(8)">
+          <img src="https://images-cdn.ispot.tv/ad/tWZ2/default.jpg" alt="">
+          <div class="play"><div class="play-icon"><svg viewBox="0 0 10 12"><polygon points="0,0 10,6 0,12"/></svg></div></div>
+        </div>
       </div>
       <button class="reel-arrow right" onclick="reelScroll(1)">&#8250;</button>
     </div>
@@ -581,7 +585,7 @@
       <div class="logo-item" data-name="Ford"><img src="https://cdn.simpleicons.org/ford/ffffff" alt="Ford" style="height:34px;"></div>
       <div class="logo-item" data-name="Netflix"><img src="https://cdn.simpleicons.org/netflix/ffffff" alt="Netflix" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Facebook"><img src="https://cdn.simpleicons.org/facebook/ffffff" alt="Facebook"></div>
-      <div class="logo-item" data-name="Chipotle"><img class="local" src="chipotle-circle.svg" alt="Chipotle" style="height:26px;" onerror="this.parentElement.style.display='none'"></div>
+      <div class="logo-item" data-name="Chipotle"><span class="logo-word">Chipotle</span></div>
       <div class="logo-item" data-name="Hilton"><img src="https://cdn.simpleicons.org/hilton/ffffff" alt="Hilton" onerror="this.parentElement.style.display='none'"></div>
       <div class="logo-item" data-name="Meta"><img src="https://cdn.simpleicons.org/meta/ffffff" alt="Meta"></div>
       <div class="logo-item" data-name="FOX"><img class="local" src="fox.svg" alt="FOX" style="height:13px;" onerror="this.parentElement.style.display='none'"></div>
@@ -610,14 +614,22 @@
     'https://www.youtube.com/embed/hh_vfP-5f9o?autoplay=1',
     'https://www.ispot.tv/share/qKIL',
     'https://www.ispot.tv/share/Zh4w',
+    'https://www.ispot.tv/share/tWZ2',
   ];
   let currentVideo = 0;
 
   function reelScroll(dir) {
-    var reel  = document.getElementById('grid-reel');
-    var thumb = reel.querySelector('.thumb');
+    var reel   = document.getElementById('grid-reel');
+    var thumb  = reel.querySelector('.thumb');
     var amount = thumb ? thumb.offsetWidth + 8 : 340;
-    reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    var max    = reel.scrollWidth - reel.clientWidth;
+    if (dir > 0 && reel.scrollLeft >= max - 4) {
+      reel.scrollTo({ left: 0, behavior: 'smooth' });
+    } else if (dir < 0 && reel.scrollLeft <= 4) {
+      reel.scrollTo({ left: max, behavior: 'smooth' });
+    } else {
+      reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    }
   }
   function openLight(index) {
     currentVideo = index;
