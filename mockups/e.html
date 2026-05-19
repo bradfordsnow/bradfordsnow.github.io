@@ -629,11 +629,16 @@
     reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
 
+  var thumbs    = reel.querySelectorAll('.thumb');
+  var lastThumb = thumbs[thumbs.length - 1];
+
   function updateArrows() {
-    var thumbs    = reel.querySelectorAll('.thumb');
-    var lastThumb = thumbs[thumbs.length - 1];
-    var atStart   = reel.scrollLeft <= 4;
-    var atEnd     = reel.scrollLeft >= lastThumb.offsetLeft - 4;
+    var atStart  = reel.scrollLeft <= 4;
+    // Calculate last thumb's scroll position independent of offsetParent
+    var lastScrollLeft = lastThumb.getBoundingClientRect().left
+                       - reel.getBoundingClientRect().left
+                       + reel.scrollLeft;
+    var atEnd    = reel.scrollLeft >= lastScrollLeft - 4;
     arrowL.style.opacity       = atStart ? '0' : '1';
     arrowL.style.pointerEvents = atStart ? 'none' : '';
     arrowR.style.opacity       = atEnd ? '0' : '1';
