@@ -626,21 +626,28 @@
     reel.scrollBy({ left: dir * amount, behavior: 'smooth' });
   }
 
-  // Infinite clone loop — duplicate thumbs so the reel appears endless
+  // Infinite clone loop — prepend + append clones, start in the middle set
   (function () {
     var reel = document.getElementById('grid-reel');
     var originals = Array.from(reel.querySelectorAll('.thumb'));
+
+    // Prepend clones before originals
+    var pre = document.createDocumentFragment();
+    originals.forEach(function (t) { pre.appendChild(t.cloneNode(true)); });
+    reel.insertBefore(pre, reel.firstChild);
+
+    // Append clones after originals
     originals.forEach(function (t) { reel.appendChild(t.cloneNode(true)); });
 
-    var halfWidth = 0;
+    var oneSet = 0;
     requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        halfWidth = reel.scrollWidth / 2;
-        reel.addEventListener('scroll', function () {
-          if (reel.scrollLeft >= halfWidth) reel.scrollLeft -= halfWidth;
-          else if (reel.scrollLeft < 0)    reel.scrollLeft += halfWidth;
-        }, { passive: true });
-      });
+      oneSet = reel.scrollWidth / 3;
+      reel.scrollLeft = oneSet; // start viewing originals
+
+      reel.addEventListener('scroll', function () {
+        if (reel.scrollLeft < oneSet)          reel.scrollLeft += oneSet;
+        else if (reel.scrollLeft >= oneSet * 2) reel.scrollLeft -= oneSet;
+      }, { passive: true });
     });
   }());
   function openLight(index) {
