@@ -134,12 +134,31 @@
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: rgba(216,212,204,0.53);
+    transition: color 0.2s, transform 0.2s;
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  .skills-grid.visible .sk {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .skills-grid .sk::before {
     content: '·';
     margin-right: 7px;
     opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .skills-grid .sk:hover {
+    color: rgba(216,212,204,0.88);
+    transform: translateX(3px);
+  }
+
+  .skills-grid .sk:hover::before {
+    opacity: 1;
   }
 
   /* ── Scroll sections ── */
@@ -245,6 +264,8 @@
     background: rgba(0,0,0,0.35);
   }
 
+  .thumb { transition: transform 0.22s ease; }
+  .thumb:hover { transform: scale(1.025); }
   .thumb:hover .play { opacity: 1; }
   .thumb:hover img { opacity: 0.75; }
 
@@ -357,6 +378,8 @@
     filter: brightness(0) invert(1);
   }
 
+  .logo-item { transition: transform 0.22s ease; }
+  .logo-item:hover { transform: scale(1.08); }
   .logo-item:hover img {
     opacity: 0.65;
   }
@@ -684,6 +707,23 @@
     }
 
     requestAnimationFrame(update);
+  }());
+
+  // Staggered fade-in for skills grid
+  (function () {
+    var grid = document.querySelector('.skills-grid');
+    var items = grid.querySelectorAll('.sk');
+    var observer = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        items.forEach(function (sk, i) {
+          sk.style.transition = 'color 0.2s, transform 0.2s, opacity 0.35s ' + (i * 40) + 'ms, transform 0.35s ' + (i * 40) + 'ms';
+          sk.style.opacity = '1';
+          sk.style.transform = 'translateY(0)';
+        });
+        observer.disconnect();
+      }
+    }, { threshold: 0.2 });
+    observer.observe(grid);
   }());
 </script>
 </body>
