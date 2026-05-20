@@ -28,12 +28,13 @@
   .ig-link img {
     height: 13px;
     width: auto;
-    opacity: 0.23;
+    opacity: 0.42;
     transition: opacity 0.2s;
   }
 
-  .ig-link:hover { color: rgba(216,212,204,0.55); }
-  .ig-link:hover img { opacity: 0.55; }
+  .ig-link { color: rgba(216,212,204,0.42); }
+  .ig-link:hover { color: rgba(216,212,204,0.7); }
+  .ig-link:hover img { opacity: 0.7; }
 
   .ig-link span {
     font-size: 10px;
@@ -111,6 +112,17 @@
   }
 
   .bio p + p { margin-top: 14px; }
+
+  .bio p {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.45s, transform 0.45s;
+  }
+
+  .bio.visible p {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   .bio-label {
     display: block;
@@ -277,6 +289,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+  }
+
+  .play-icon::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px solid rgba(216,212,204,0.5);
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  .thumb:hover .play-icon::after {
+    animation: pulse-ring 1s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%   { transform: scale(1);    opacity: 0.6; }
+    100% { transform: scale(1.55); opacity: 0; }
   }
 
   .play-icon svg {
@@ -364,6 +396,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    height: 36px;
   }
 
   .logo-item img {
@@ -378,7 +411,12 @@
     filter: brightness(0) invert(1);
   }
 
-  .logo-item { transition: transform 0.22s ease; }
+  .logo-item {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  .logo-item { transition: transform 0.22s ease, opacity 0.35s, transform 0.35s; }
   .logo-item:hover { transform: scale(1.08); }
   .logo-item:hover img {
     opacity: 0.65;
@@ -707,6 +745,38 @@
     }
 
     requestAnimationFrame(update);
+  }());
+
+  // Bio paragraphs fade-up on scroll
+  (function () {
+    var bio = document.querySelector('.bio');
+    var paras = bio.querySelectorAll('p');
+    var obs = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        paras.forEach(function (p, i) {
+          p.style.transitionDelay = (i * 80) + 'ms';
+        });
+        bio.classList.add('visible');
+        obs.disconnect();
+      }
+    }, { threshold: 0.15 });
+    obs.observe(bio);
+  }());
+
+  // Staggered fade-in for logo grid
+  (function () {
+    var logos = document.querySelectorAll('.logo-item');
+    var obs = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        logos.forEach(function (el, i) {
+          el.style.transition = 'opacity 0.35s ' + (i * 35) + 'ms, transform 0.35s ' + (i * 35) + 'ms';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        });
+        obs.disconnect();
+      }
+    }, { threshold: 0.15 });
+    obs.observe(document.querySelector('.logo-grid'));
   }());
 
   // Staggered fade-in for skills grid
