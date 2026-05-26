@@ -645,4 +645,37 @@ function AppleTVLayout({
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+// ─── Error boundary — catches render crashes and shows them on screen ─────
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: '#08080a', color: '#fff', padding: 40, textAlign: 'center',
+          fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.28em', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Render error</div>
+          <div style={{
+            background: 'rgba(255,50,50,0.08)', border: '0.5px solid rgba(255,80,80,0.3)',
+            borderRadius: 10, padding: '16px 20px', maxWidth: 540,
+            fontFamily: '"JetBrains Mono", monospace', fontSize: 12,
+            color: 'rgba(255,130,130,0.9)', lineHeight: 1.65,
+            wordBreak: 'break-all', textAlign: 'left',
+          }}>
+            {this.state.err.message || String(this.state.err)}
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ErrorBoundary><Root /></ErrorBoundary>
+);
