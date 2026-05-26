@@ -52,10 +52,10 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
         position: 'relative',
       }}
     >
-      {/* Playback icons — vertically centered */}
+      {/* Playback icons — slightly above center */}
       <div style={{
         position: 'absolute',
-        top: '50%', left: '50%',
+        top: '35%', left: '50%',
         transform: 'translate(-50%, -50%)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center',
