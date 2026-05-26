@@ -156,6 +156,7 @@ function useSonos() {
 // ─── Root — auth gate + OAuth callback handler ────────────────────────────
 function Root() {
   const [phase, setPhase] = useState('checking');
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -168,7 +169,7 @@ function Root() {
     }
 
     if (code) {
-      // OAuth callback — exchange code for tokens
+      setPhase('exchanging');
       SonosAPI.exchangeCode(code, state)
         .then(() => {
           window.history.replaceState({}, '', window.location.pathname);
@@ -177,7 +178,10 @@ function Root() {
         })
         .catch(err => {
           console.error('OAuth exchange failed:', err);
-          setPhase('onboarding');
+          // Clean the URL so a reload doesn't retry the same dead code
+          window.history.replaceState({}, '', window.location.pathname);
+          setAuthError(err.message);
+          setPhase('error');
         });
       return;
     }
@@ -189,10 +193,48 @@ function Root() {
     }
   }, []);
 
-  if (phase === 'checking')      return <Splash label="Loading…" />;
-  if (phase === 'unconfigured')  return <UnconfiguredScreen />;
-  if (phase === 'onboarding')    return <OnboardingFlow onComplete={() => setPhase('ready')} />;
+  if (phase === 'checking' || phase === 'exchanging') return <Splash label={phase === 'exchanging' ? 'Connecting…' : 'Loading…'} />;
+  if (phase === 'unconfigured') return <UnconfiguredScreen />;
+  if (phase === 'error')        return <AuthErrorScreen message={authError} onRetry={() => setPhase('onboarding')} />;
+  if (phase === 'onboarding')   return <OnboardingFlow onComplete={() => setPhase('ready')} />;
   return <App />;
+}
+
+function AuthErrorScreen({ message, onRetry }) {
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      background: '#08080a', color: '#fff', padding: 40, textAlign: 'center',
+      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.28em',
+                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)',
+                    marginBottom: 32 }}>Connection failed</div>
+      <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 42,
+                   fontWeight: 400, margin: '0 0 16px' }}>Token error</h1>
+      <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', maxWidth: 480,
+                  lineHeight: 1.65, margin: '0 0 24px' }}>
+        Sonos authorized OK but the token exchange failed.
+      </p>
+      <div style={{
+        background: 'rgba(255,60,60,0.08)', border: '0.5px solid rgba(255,60,60,0.25)',
+        borderRadius: 10, padding: '14px 20px', maxWidth: 520,
+        fontFamily: '"JetBrains Mono", monospace', fontSize: 12,
+        color: 'rgba(255,120,120,0.9)', lineHeight: 1.6,
+        marginBottom: 40, wordBreak: 'break-all', textAlign: 'left',
+      }}>
+        {message || 'Unknown error'}
+      </div>
+      <button onClick={onRetry} style={{
+        background: '#fff', color: '#000', border: 'none', borderRadius: 12,
+        padding: '14px 36px', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      }}>
+        Try again
+      </button>
+    </div>
+  );
 }
 
 // ─── Splash / loading screen ──────────────────────────────────────────────
