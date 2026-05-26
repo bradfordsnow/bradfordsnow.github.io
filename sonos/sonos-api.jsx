@@ -64,14 +64,18 @@ const SonosAPI = {
   },
 
   async _tokenRequest(body) {
-    const creds = btoa(`${SONOS_CONFIG.clientId}:${SONOS_CONFIG.clientSecret}`);
+    // Send client credentials in the body rather than the Authorization header.
+    // This avoids a CORS preflight (application/x-www-form-urlencoded with no
+    // custom headers is a "simple" request that doesn't need a preflight).
+    const params = new URLSearchParams({
+      ...body,
+      client_id:     SONOS_CONFIG.clientId,
+      client_secret: SONOS_CONFIG.clientSecret,
+    });
     const res = await fetch(SONOS_TOKEN, {
       method: 'POST',
-      headers: {
-        'Authorization':  `Basic ${creds}`,
-        'Content-Type':   'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(body),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
     });
     if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
     return res.json();
