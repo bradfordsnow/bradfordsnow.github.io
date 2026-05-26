@@ -61,8 +61,9 @@ const SonosAPI = {
   },
 
   async _tokenRequest(body) {
-    // Route through Cloudflare Worker proxy to avoid CORS on the Sonos token endpoint
-    const endpoint = SONOS_CONFIG.tokenProxy || SONOS_TOKEN;
+    const endpoint = SONOS_CONFIG.tokenProxy
+      ? `${SONOS_CONFIG.tokenProxy}/token`
+      : SONOS_TOKEN;
     const creds = btoa(`${SONOS_CONFIG.clientId}:${SONOS_CONFIG.clientSecret}`);
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -106,9 +107,13 @@ const SonosAPI = {
 
   // ── HTTP helpers ───────────────────────────────────────────────────────
 
+  _apiBase() {
+    return SONOS_CONFIG.tokenProxy || SONOS_BASE;
+  },
+
   async _get(path) {
     const token = await this._token();
-    const res = await fetch(`${SONOS_BASE}${path}`, {
+    const res = await fetch(`${this._apiBase()}${path}`, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
     if (res.status === 401) { await this._refresh(); return this._get(path); }
@@ -118,7 +123,7 @@ const SonosAPI = {
 
   async _post(path, body = {}) {
     const token = await this._token();
-    const res = await fetch(`${SONOS_BASE}${path}`, {
+    const res = await fetch(`${this._apiBase()}${path}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
