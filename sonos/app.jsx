@@ -152,7 +152,7 @@ function useSonos() {
     },
   };
 
-  return { data, actions, poll, needsReauth: !SonosAPI.isAuthenticated() && !data.loading };
+  return { data, actions, poll };
 }
 
 // ─── Root — auth gate + OAuth callback handler ────────────────────────────
@@ -316,13 +316,7 @@ const IS_REAL_DEVICE = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const { data, actions, needsReauth } = useSonos();
-
-  // If refresh token was wiped (invalid), bounce back to connect screen
-  if (needsReauth) {
-    localStorage.removeItem(SETUP_KEY);
-    window.location.reload();
-  }
+  const { data, actions } = useSonos();
 
   const [volumeOpen,   setVolumeOpen]   = useState(false);
   const [speakerOpen,  setSpeakerOpen]  = useState(false);
