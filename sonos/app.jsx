@@ -100,7 +100,9 @@ function useSonos() {
         track,
         positionSecs:  posSecs,
         volume:        vol?.volume ?? d.volume,
-        vinyl:         !track,
+        // Vinyl only when actively playing with no track info (line-in / unknown source)
+        // If not playing and no track → black, not vinyl
+        vinyl:         playing && !track,
       }));
     } catch (err) {
       console.warn('Sonos poll error:', err.message);
@@ -414,6 +416,18 @@ function App() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', position: 'relative',
     }}>
+      {data.error && (
+        <div style={{
+          position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(200,40,40,0.85)', borderRadius: 8,
+          padding: '8px 14px', zIndex: 9999, maxWidth: '90vw',
+          fontFamily: '"JetBrains Mono", monospace', fontSize: 11,
+          color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+          backdropFilter: 'blur(8px)',
+        }}>
+          API error: {data.error}
+        </div>
+      )}
       {framed}
 
       <TweaksPanel title="Sonos Player">
