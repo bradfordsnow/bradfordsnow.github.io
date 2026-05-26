@@ -106,7 +106,8 @@ function Song({ size, name, maxWidth }) {
       fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
       color: '#fff',
       ...(maxWidth != null ? {
-        display: 'inline-block',
+        display: 'block',
+        width: 'fit-content',
         maxWidth,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
