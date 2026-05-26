@@ -203,8 +203,14 @@ function OnboardingFlow({ onComplete }) {
   ];
 
   const startScan = () => {
-    // Real OAuth — redirect to Sonos login
-    window.location.href = SonosAPI.getAuthUrl();
+    const url = SonosAPI.getAuthUrl();
+    // Show URL in a prompt so it's visible/copyable on any device (no dev tools needed)
+    const go = window.confirm(
+      'About to redirect to Sonos login.\n\n' +
+      'Auth URL:\n' + url + '\n\n' +
+      'OK = continue to Sonos   Cancel = stay here'
+    );
+    if (go) window.location.href = url;
   };
 
   const finish = () => {
