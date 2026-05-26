@@ -1,9 +1,4 @@
-// portrait-layout.jsx — Vertical Now-Playing layout for portrait
-// orientations on iPad and iPhone.
-//
-// Vertical composition: top margin · cover · bottom margin. Metadata is
-// centered inside the top margin, controls are clustered together
-// (justify-center, not space-between) in the bottom margin.
+// portrait-layout.jsx — Vertical Now-Playing layout for portrait orientations.
 
 function PortraitLayout({
   width, height, vinyl, paused, shazam,
@@ -12,7 +7,8 @@ function PortraitLayout({
   rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onSpeakerClick, onSwitchGroup, onAddPlayer, onRemovePlayer,
+  onSpeakerClick, onCloseSpeaker, onSpeakerActivity,
+  onSwitchGroup, onAddPlayer, onRemovePlayer,
   compact = false, lines = 3, track = {},
 }) {
   const s = compact ? 0.5 : 1;
@@ -33,6 +29,14 @@ function PortraitLayout({
       color: '#fff',
     }}>
       {compact && <div style={{ height: diReserve, flexShrink: 0 }} />}
+
+      {/* Click-outside overlay — closes the speaker panel */}
+      {speakerOpen && (
+        <div
+          style={{ position: 'absolute', inset: 0, zIndex: 19 }}
+          onPointerDown={onCloseSpeaker}
+        />
+      )}
 
       {/* TOP MARGIN — metadata centered */}
       <div style={{
@@ -60,21 +64,22 @@ function PortraitLayout({
             volume={volume} playerVolumes={playerVolumes}
             onMasterVolumeChange={onMasterVolumeChange}
             onPlayerVolumeChange={onPlayerVolumeChange}
+            onActivity={onSpeakerActivity}
             anchorBottom={20 * s} anchorRight={20 * s} />
         )}
       </div>
 
-      {/* BOTTOM MARGIN — controls clustered together, centered */}
+      {/* BOTTOM MARGIN — controls */}
       <div style={{
         flex: 1, minHeight: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', zIndex: 20,
       }}>
         <HorizontalControls
           vinyl={vinyl} paused={paused}
           active={controlsActive} onWake={onWake}
           onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
           onSpeakerClick={onSpeakerClick}
-          roomsActive={roomsActive}
           scale={s}
         />
       </div>
@@ -82,22 +87,27 @@ function PortraitLayout({
   );
 }
 
-// ─── Horizontal controls dock (portrait analogue of the right strip) ──────
-// Playback buttons + speaker button clustered together.
-// Volume is now inside the SpeakerPanel — no standalone volume button.
+// ─── Horizontal controls dock ─────────────────────────────────────────────
 function HorizontalControls({
   vinyl, paused, active, onWake,
   onPause, onSkipBack, onSkipForward,
-  onSpeakerClick, roomsActive, scale = 1,
+  onSpeakerClick, scale = 1,
 }) {
-  return (
-    <div onPointerDown={onWake} style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: vinyl ? 120 * scale : 64 * scale,
-      opacity: active ? 1 : 0.22,
-      transition: 'opacity .9s cubic-bezier(.3,.7,.4,1)',
-    }}>
+  const { useState } = React;
+  const [hovered, setHovered] = useState(false);
 
+  return (
+    <div
+      onPointerDown={onWake}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: vinyl ? 120 * scale : 64 * scale,
+        opacity: (active || hovered) ? 1 : 0.22,
+        transition: 'opacity .4s cubic-bezier(.3,.7,.4,1)',
+      }}
+    >
       {/* Playback */}
       {!vinyl && (
         <div style={{
@@ -107,7 +117,7 @@ function HorizontalControls({
           <ControlButton onClick={onSkipBack} label="Previous track" size={40 * scale}>
             <span style={{ opacity: 0.78 }}><IconSkipBack size={22 * scale} /></span>
           </ControlButton>
-          <ControlButton onClick={onPause} primary label={paused ? 'Play' : 'Pause'} accent>
+          <ControlButton onClick={onPause} primary label={paused ? 'Play' : 'Pause'}>
             {paused ? <IconPlay size={28 * scale} /> : <IconPause size={26 * scale} />}
           </ControlButton>
           <ControlButton onClick={onSkipForward} label="Next track" size={40 * scale}>
@@ -116,20 +126,10 @@ function HorizontalControls({
         </div>
       )}
 
-      {/* Speakers */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 * scale }}>
-        <ControlButton onClick={onSpeakerClick} label="Speakers" size={44 * scale}>
-          <IconSpeaker size={24 * scale} />
-        </ControlButton>
-        <div style={{
-          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontSize: 9 * scale, letterSpacing: '0.18em',
-          color: 'rgba(255,255,255,0.5)',
-          fontVariantNumeric: 'tabular-nums',
-        }}>
-          {roomsActive} ON
-        </div>
-      </div>
+      {/* Speaker button — no label text below it */}
+      <ControlButton onClick={onSpeakerClick} label="Speakers" size={44 * scale}>
+        <IconSpeaker size={24 * scale} />
+      </ControlButton>
     </div>
   );
 }

@@ -373,7 +373,9 @@ function App() {
 
   useEffect(() => { if (speakerOpen) resetSpeakerTimer(); }, [speakerOpen]);
 
-  const onSpeakerClick = () => { setSpeakerOpen(v => !v); };
+  const onSpeakerClick   = () => { setSpeakerOpen(v => !v); };
+  const onCloseSpeaker   = () => { setSpeakerOpen(false); };
+  const onSpeakerActivity = () => { resetSpeakerTimer(); wakeControls(); };
 
   // Fetch per-player volumes whenever the speaker panel opens
   useEffect(() => {
@@ -426,8 +428,27 @@ function App() {
     onSkipBack:           () => { actions.skipPrev();   wakeControls(); },
     onSkipForward:        () => { actions.skipNext();   wakeControls(); },
     onSpeakerClick:       () => { onSpeakerClick(); wakeControls(); },
-    onMasterVolumeChange: (v)       => { actions.setVolume(v);       wakeControls(); },
-    onPlayerVolumeChange: (id, v)   => { actions.setPlayerVol(id, v); wakeControls(); },
+    onCloseSpeaker,
+    onSpeakerActivity,
+    onMasterVolumeChange: (v) => {
+      // Proportionally scale all per-player volumes (master acts as a macro)
+      const oldMaster = data.volume;
+      const activeGroup = data.groups.find(g => g.active);
+      if (activeGroup?.playerIds) {
+        activeGroup.playerIds.forEach(pid => {
+          const pVol = data.playerVolumes[pid];
+          if (typeof pVol === 'number') {
+            const newVol = oldMaster > 0
+              ? Math.min(100, Math.max(0, Math.round(pVol * v / oldMaster)))
+              : v;
+            actions.setPlayerVol(pid, newVol);
+          }
+        });
+      }
+      actions.setVolume(v);
+      wakeControls();
+    },
+    onPlayerVolumeChange: (id, v) => { actions.setPlayerVol(id, v); wakeControls(); },
     onSwitchGroup:        (id) => { actions.switchGroup(id);     wakeControls(); },
     onAddPlayer:          (id) => { actions.addToGroup(id);      wakeControls(); },
     onRemovePlayer:       (id) => { actions.removeFromGroup(id); wakeControls(); },
@@ -606,7 +627,7 @@ function LandscapeLayout({
   rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onSpeakerClick,
+  onSpeakerClick, onCloseSpeaker, onSpeakerActivity,
   onSwitchGroup, onAddPlayer, onRemovePlayer,
   typeScale = 1, lines = 1, track = {},
   positionSecs = 0,
@@ -621,6 +642,14 @@ function LandscapeLayout({
       display: 'flex', alignItems: 'stretch',
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
     }}>
+      {/* Click-outside overlay — closes speaker panel on any click outside it */}
+      {speakerOpen && (
+        <div
+          style={{ position: 'absolute', inset: 0, zIndex: 19 }}
+          onPointerDown={onCloseSpeaker}
+        />
+      )}
+
       {/* Left — spine */}
       <div style={{
         flex: 1, height: '100%', background: '#000',
@@ -645,15 +674,16 @@ function LandscapeLayout({
             onSwitchGroup={onSwitchGroup} onAddPlayer={onAddPlayer} onRemovePlayer={onRemovePlayer}
             volume={volume} playerVolumes={playerVolumes}
             onMasterVolumeChange={onMasterVolumeChange} onPlayerVolumeChange={onPlayerVolumeChange}
+            onActivity={onSpeakerActivity}
             anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
         )}
       </div>
 
-      {/* Right — controls + clock + time remaining */}
+      {/* Right — controls + clock + time remaining (zIndex 20 keeps it above overlay) */}
       <div style={{
         flex: 1, height: '100%', background: '#000',
         display: 'flex', alignItems: 'stretch', justifyContent: 'center',
-        position: 'relative',
+        position: 'relative', zIndex: 20,
       }}>
         <Controls width={controlW} vinyl={vinyl} paused={paused}
                   active={controlsActive} onWake={onWake}
