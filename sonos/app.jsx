@@ -362,7 +362,7 @@ function App() {
     volume: data.volume, volumeOpen, speakerOpen,
     rooms: data.groups, roomsActive,
     controlsActive, onWake: wakeControls,
-    track: data.track,
+    track: data.track || {},
     positionSecs: data.positionSecs,
     onPause:        () => { actions.togglePlay(); wakeControls(); },
     onSkipBack:     () => { actions.skipPrev();   wakeControls(); },
