@@ -16,6 +16,23 @@ function _isLocalUrl(url) {
   return Boolean(url && /^http:\/\/(127\.|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(url));
 }
 
+// Sonos local proxy URLs have the real CDN URL encoded in their `u` query param:
+//   http://192.168.x.x:1400/getaa?u=x-sonos-http%3A%2F%2Fi.scdn.co%2Fimage%2F...
+// Extract and return that CDN URL. For non-local URLs, returns the URL unchanged.
+// Returns null if local but no extractable CDN URL (e.g. locally-stored files).
+function _resolveCdnUrl(url) {
+  if (!url) return null;
+  if (!_isLocalUrl(url)) return url;
+  try {
+    const u = new URL(url).searchParams.get('u');
+    if (!u) return null;
+    const decoded = decodeURIComponent(u)
+      .replace(/^x-sonos-https?:\/\//i, 'https://');
+    if (decoded.startsWith('https://') && !_isLocalUrl(decoded)) return decoded;
+  } catch {}
+  return null;
+}
+
 const TWEAK_DEFAULTS = {
   device:      'ipad',
   orientation: 'landscape',
@@ -76,30 +93,34 @@ function useSonos() {
       // for per-track artwork. These can't load on an HTTPS page (mixed-content /
       // Private Network Access block). Skip them; container.imageUrl usually has
       // the real CDN URL (Spotify, Apple Music, etc.).
+      // For each candidate, extract the real CDN URL from any local Sonos proxy URL.
       const artCandidates = [
         rawTrack?.imageUrl,
         item?.imageUrl,
         meta?.container?.imageUrl,
-      ];
-      const resolvedArtUrl = artCandidates.find(u => u && !_isLocalUrl(u)) || '';
+      ].map(_resolveCdnUrl);
+      const resolvedArtUrl = artCandidates.find(Boolean) || '';
 
       if (rawTrack?.name) {
+        // Try several fields the Sonos API might carry release year in
+        const rawYear = rawTrack?.releaseDate || rawTrack?.year ||
+                        rawTrack?.album?.year  || rawTrack?.album?.releaseDate || '';
+        const year = rawYear ? (String(rawYear).match(/\d{4}/) || [''])[0] : '';
         track = {
           artist:      rawTrack.artist?.name || meta?.container?.name || '',
           song:        rawTrack.name,
           album:       rawTrack.album?.name || '',
-          year:        '',
+          year,
           artworkUrl:  resolvedArtUrl,
           durationSecs:(rawTrack.durationMillis || 0) / 1000,
         };
       } else if (meta?.container?.name) {
-        const cArt = meta.container.imageUrl;
         track = {
           artist:      meta.container.name,
           song:        meta.streamInfo || '',
           album:       '',
           year:        '',
-          artworkUrl:  _isLocalUrl(cArt) ? '' : (cArt || ''),
+          artworkUrl:  _resolveCdnUrl(meta.container.imageUrl) || '',
           durationSecs:0,
         };
       }

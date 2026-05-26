@@ -52,18 +52,43 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
 }
 
 function SpineOneLine({ scale, track = {}, maxW = 0 }) {
-  // Reserve space for artist + album + year + three gaps; cap song at the remainder
-  const songMaxW = maxW > 0 ? Math.max(80, maxW - Math.round(300 * scale)) : undefined;
+  // Artist and Album get their natural widths (flexShrink:0).
+  // Song takes all remaining space with flex:1 and truncates — no guesswork needed.
   return (
     <div style={{
       display: 'flex', flexDirection: 'row', alignItems: 'baseline',
-      gap: 34 * scale, whiteSpace: 'nowrap',
-      lineHeight: 1,
+      gap: 34 * scale, lineHeight: 1,
+      ...(maxW > 0 ? { maxWidth: maxW } : {}),
     }}>
-      <Artist size={16 * scale} name={track.artist} />
-      <Song   size={48 * scale} name={track.song} maxWidth={songMaxW} />
-      <Album  size={24 * scale} name={track.album} />
-      {track.year && <Year size={12 * scale} name={track.year} />}
+      {/* Artist — always full width, never shrinks */}
+      <span style={{
+        flexShrink: 0, whiteSpace: 'nowrap',
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        fontSize: 16 * scale, fontWeight: 500, letterSpacing: '0.28em',
+        textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
+      }}>{track.artist || 'Now Playing'}</span>
+
+      {/* Song — takes remaining space, clips with ellipsis */}
+      {track.song && (
+        <span style={{
+          flex: '1 1 0', minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap', paddingBottom: '0.15em',
+          fontFamily: '"Cormorant Garamond", serif',
+          fontSize: 48 * scale, fontWeight: 500, letterSpacing: '-0.005em',
+          color: '#fff',
+        }}>{track.song}</span>
+      )}
+
+      {/* Album + year — never shrinks */}
+      {track.album && (
+        <span style={{
+          flexShrink: 0, whiteSpace: 'nowrap',
+          fontFamily: '"Cormorant Garamond", serif',
+          fontSize: 24 * scale, fontStyle: 'italic', fontWeight: 400,
+          color: 'rgba(255,255,255,0.52)',
+        }}>{track.album}{track.year ? ` - ${track.year}` : ''}</span>
+      )}
     </div>
   );
 }
@@ -112,6 +137,7 @@ function Song({ size, name, maxWidth }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        paddingBottom: '0.15em',  // room for descenders (g, p, y…)
       } : {}),
     }}>{name}</span>
   );
@@ -146,7 +172,7 @@ function AlbumYear({ scale, track = {} }) {
       gap: 17 * scale, lineHeight: 1,
     }}>
       {hasAlbum && <Album size={26 * scale} name={track.album} />}
-      {hasAlbum && hasYear && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 17 * scale }}>·</span>}
+      {hasAlbum && hasYear && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 17 * scale }}>{' - '}</span>}
       {hasYear  && <Year  size={14 * scale} name={track.year} />}
     </span>
   );
