@@ -301,6 +301,9 @@ function UnconfiguredScreen() {
 }
 
 // ─── Main app ─────────────────────────────────────────────────────────────
+const IS_REAL_DEVICE = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS 13+
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const { data, actions } = useSonos();
@@ -343,7 +346,7 @@ function App() {
   const effectiveOrientation = t.device === 'tv' ? 'landscape' : t.orientation;
   const { w: fw, h: fh } = frameSize(t.device, effectiveOrientation);
   const { w: dw, h: dh } = displaySize(t.device, effectiveOrientation);
-  const typeScale = deviceTypeScale(t.device);
+  const typeScale = IS_REAL_DEVICE ? 1.0 : deviceTypeScale(t.device);
 
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -356,6 +359,11 @@ function App() {
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
   }, [fw, fh]);
+
+  // On a real device: fill the viewport directly, no frame
+  const realW = window.innerWidth;
+  const realH = window.innerHeight;
+  const realOrientation = realW > realH ? 'landscape' : 'portrait';
 
   const layoutProps = {
     vinyl, paused: !data.playing, shazam: t.shazam,
@@ -374,7 +382,11 @@ function App() {
   };
 
   let inner;
-  if (t.device === 'tv') {
+  if (IS_REAL_DEVICE) {
+    inner = realOrientation === 'portrait'
+      ? <PortraitLayout width={realW} height={realH} compact={false} {...layoutProps} />
+      : <LandscapeLayout width={realW} height={realH} {...layoutProps} />;
+  } else if (t.device === 'tv') {
     inner = <AppleTVLayout width={dw} height={dh} {...layoutProps} />;
   } else if (effectiveOrientation === 'portrait') {
     inner = <PortraitLayout width={dw} height={dh}
@@ -384,7 +396,9 @@ function App() {
   }
 
   let framed;
-  if (t.device === 'tv') {
+  if (IS_REAL_DEVICE) {
+    framed = inner; // no frame on real devices
+  } else if (t.device === 'tv') {
     framed = <TVFrame scale={scale}>{inner}</TVFrame>;
   } else if (t.device === 'iphone') {
     framed = <IPhoneFrame orientation={effectiveOrientation} scale={scale}>{inner}</IPhoneFrame>;
