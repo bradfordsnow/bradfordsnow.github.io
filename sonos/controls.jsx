@@ -1,5 +1,4 @@
 // controls.jsx — Right control strip (playback + speaker button).
-// Volume is entirely inside SpeakerPanel: per-speaker sliders + master footer.
 
 function fmt(s) {
   s = Math.max(0, Math.floor(s));
@@ -9,25 +8,48 @@ function fmt(s) {
 }
 
 // ─── Landscape right-strip ────────────────────────────────────────────────
-function Controls({ width, vinyl, paused, active, onWake,
-                    onPause, onSkipBack, onSkipForward,
-                    onSpeakerClick, speakerOpen = false,
-                    scale = 1 }) {
-  const { useState } = React;
-  const [hovered, setHovered] = useState(false);
+// Controls manages its own active/dim state internally.
+// Speaker button is fully independent — never participates in dim logic.
+function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
+                    onSpeakerClick, speakerOpen = false, scale = 1 }) {
+  const { useState, useRef } = React;
+  const [active,      setActive]      = useState(false);
+  const [lastPressed, setLastPressed] = useState(null); // 'back'|'pause'|'forward'|null
+  const activeTimer = useRef(null);
+  const pressTimer  = useRef(null);
+
+  // Wake — bring controls from dark→medium gray; reset 10s inactivity timer
+  const wake = () => {
+    setActive(true);
+    clearTimeout(activeTimer.current);
+    activeTimer.current = setTimeout(() => setActive(false), 10000);
+  };
+
+  // handlePress — fires the action, wakes controls, marks the button white for 5s
+  const handlePress = (id, action) => {
+    action?.();
+    wake();
+    setLastPressed(id);
+    clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => setLastPressed(null), 5000);
+  };
+
+  // Color for each playback button:
+  //   inactive  → dark gray
+  //   active + not just pressed → medium gray
+  //   just pressed → white (for 5s)
+  const getColor = (id) => {
+    if (!active) return 'rgba(255,255,255,0.22)';
+    if (lastPressed === id) return '#fff';
+    return 'rgba(255,255,255,0.5)';
+  };
 
   return (
     <div
-      onPointerDown={onWake}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onPointerDown={wake}  // any tap in the controls column wakes playback controls
       style={{
-        width, height: '100%',
-        background: '#000',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center',
-        opacity: (active || hovered || speakerOpen) ? 1 : 0.22,
-        transition: 'opacity .4s cubic-bezier(.3,.7,.4,1)',
+        width, height: '100%', background: '#000',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}
     >
       {/* Top spacer */}
@@ -42,20 +64,29 @@ function Controls({ width, vinyl, paused, active, onWake,
       }}>
         {!vinyl && (
           <>
-            <ControlButton onClick={onSkipBack} label="Previous track" size={48 * scale}>
-              <span style={{ opacity: 0.78 }}><IconSkipBack size={26 * scale} /></span>
+            <ControlButton
+              onClick={() => handlePress('back', onSkipBack)}
+              label="Previous track" size={48 * scale} color={getColor('back')}
+            >
+              <IconSkipBack size={26 * scale} />
             </ControlButton>
-            <ControlButton onClick={onPause} primary size={53 * scale} label={paused ? 'Play' : 'Pause'}>
+            <ControlButton
+              onClick={() => handlePress('pause', onPause)}
+              size={74 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
+            >
               {paused ? <IconPlay size={34 * scale} /> : <IconPause size={31 * scale} />}
             </ControlButton>
-            <ControlButton onClick={onSkipForward} label="Next track" size={48 * scale}>
-              <span style={{ opacity: 0.78 }}><IconSkipForward size={26 * scale} /></span>
+            <ControlButton
+              onClick={() => handlePress('forward', onSkipForward)}
+              label="Next track" size={48 * scale} color={getColor('forward')}
+            >
+              <IconSkipForward size={26 * scale} />
             </ControlButton>
           </>
         )}
       </div>
 
-      {/* Bottom — speaker button: no circle ever, just gray or white */}
+      {/* Bottom — speaker button: completely independent, never dims with playback */}
       <div style={{
         flex: 1.4,
         display: 'flex', flexDirection: 'column',
@@ -64,13 +95,14 @@ function Controls({ width, vinyl, paused, active, onWake,
       }}>
         <button
           onClick={onSpeakerClick}
+          onPointerDown={(e) => e.stopPropagation()} // don't wake playback controls
           aria-label="Speakers"
           style={{
             width: 53 * scale, height: 53 * scale,
             border: 'none', background: 'transparent', padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
-            color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.6)',
+            color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.35)',
             transition: 'color .18s',
             WebkitTapHighlightColor: 'transparent',
           }}
@@ -83,39 +115,31 @@ function Controls({ width, vinyl, paused, active, onWake,
 }
 
 // ─── ControlButton ────────────────────────────────────────────────────────
-// primary=true  → no border/circle, just the icon (play/pause)
-// active=true   → always white (used for speaker button when panel is open)
-// hover brightens to full white; press scales down with opacity flash
-function ControlButton({ children, onClick, onPointerDown: forwardPD,
-                         size = 44, primary = false, active = false, label }) {
+// No circles, no hover backgrounds. Color is passed in externally.
+// Only animation: scale down on press (hold feedback).
+function ControlButton({ children, onClick, size = 44, label, color = 'rgba(255,255,255,0.5)' }) {
   const { useState } = React;
-  const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
-  const w = primary ? size * 1.4 : size;
 
   return (
     <button
       onClick={onClick}
       aria-label={label}
       style={{
-        width: w, height: w, borderRadius: '50%',
-        border: 'none',
-        background: (hovered && !primary && !active) ? 'rgba(255,255,255,0.08)' : 'transparent',
-        color: (hovered || pressed || active) ? '#fff' : 'rgba(255,255,255,0.75)',
+        width: size, height: size,
+        border: 'none', background: 'transparent', padding: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', padding: 0,
+        cursor: 'pointer',
+        color,
         transform: pressed ? 'scale(0.85)' : 'scale(1)',
-        opacity: pressed ? 0.65 : 1,
-        transition: pressed ? 'none' : 'transform .15s, opacity .15s, color .12s, background .12s',
+        opacity:   pressed ? 0.7 : 1,
+        transition: pressed
+          ? 'transform .1s'
+          : 'transform .18s, color .4s, opacity .18s',
         WebkitTapHighlightColor: 'transparent',
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setPressed(false); }}
-      onPointerDown={(e) => {
-        setPressed(true);
-        if (forwardPD) forwardPD(e);
-      }}
-      onPointerUp={() => setPressed(false)}
+      onPointerDown={() => setPressed(true)}
+      onPointerUp={()   => setPressed(false)}
       onPointerLeave={() => setPressed(false)}
     >
       {children}
@@ -135,24 +159,17 @@ function SpeakerPanel({
   const activeGroup     = rooms.find(g => g.active);
   const activePlayerIds = new Set(activeGroup?.playerIds || []);
 
-  // All groups alphabetically (active + inactive)
-  const allGroups  = [...rooms].sort((a, b) => a.name.localeCompare(b.name));
-  const sorted     = [...players].sort((a, b) => a.name.localeCompare(b.name));
-  const inGroup    = sorted.filter(p => activePlayerIds.has(p.id));
-  const notInGroup = sorted.filter(p => !activePlayerIds.has(p.id));
+  const allGroups = [...rooms].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted    = [...players].sort((a, b) => a.name.localeCompare(b.name));
 
   const LABEL = {
-    padding: '10px 18px 6px',
+    padding: '10px 12px 6px',
     fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
     fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
     fontWeight: 500,
     color: 'rgba(255,255,255,0.35)',
     textAlign: 'center',
-    textDecoration: 'underline',
-    textDecorationColor: 'rgba(255,255,255,0.18)',
-    textUnderlineOffset: '4px',
   };
-  const HR = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
 
   return (
     <div
@@ -160,7 +177,7 @@ function SpeakerPanel({
       onPointerDown={(e) => e.stopPropagation()}
       style={{
         position: 'absolute', bottom: anchorBottom, right: anchorRight,
-        width: 290,
+        width: 360,
         maxHeight: '74vh', overflowY: 'auto',
         background: 'rgba(10,10,12,0.93)',
         backdropFilter: 'blur(40px) saturate(160%)',
@@ -172,50 +189,57 @@ function SpeakerPanel({
         animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
       }}
     >
-      {/* All groups as radio-style toggles */}
-      {allGroups.length > 0 && (
-        <>
+      {/* Side-by-side: Source (left) | Speakers (right) */}
+      <div style={{ display: 'flex', alignItems: 'stretch' }}>
+
+        {/* Left — Source / groups */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={LABEL}>Source</div>
-          {allGroups.map(g => (
-            <GroupRow
-              key={g.id}
-              group={g}
-              isActive={g.active}
-              onSelect={() => { onSwitchGroup?.(g.id); onActivity?.(); }}
-            />
-          ))}
-          <div style={HR} />
-        </>
-      )}
+          {allGroups.length === 0
+            ? <div style={{ padding: '4px 12px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>No sources</div>
+            : allGroups.map(g => (
+                <GroupRow
+                  key={g.id} group={g} isActive={g.active}
+                  onSelect={() => { onSwitchGroup?.(g.id); onActivity?.(); }}
+                />
+              ))
+          }
+        </div>
 
-      {/* All speakers — toggle = in group (green) or available (gray) */}
-      <div style={LABEL}>Speakers</div>
-      {sorted.length === 0
-        ? <div style={{ padding: '4px 18px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
-            No speakers found
-          </div>
-        : sorted.map(p => {
-            const isIn = activePlayerIds.has(p.id);
-            return (
-              <SpeakerRow
-                key={p.id}
-                player={p}
-                inGroup={isIn}
-                onToggle={() => {
-                  isIn ? onRemovePlayer?.(p.id) : onAddPlayer?.(p.id);
-                  onActivity?.();
-                }}
-                volume={playerVolumes[p.id]}
-                onVolumeChange={(v) => { onPlayerVolumeChange?.(p.id, v); onActivity?.(); }}
-              />
-            );
-          })
-      }
+        {/* Vertical divider */}
+        <div style={{
+          width: '0.5px', background: 'rgba(255,255,255,0.1)',
+          flexShrink: 0, margin: '10px 0',
+        }} />
 
-      {/* Master volume footer */}
+        {/* Right — Speakers */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={LABEL}>Speakers</div>
+          {sorted.length === 0
+            ? <div style={{ padding: '4px 12px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>No speakers</div>
+            : sorted.map(p => {
+                const isIn = activePlayerIds.has(p.id);
+                return (
+                  <SpeakerRow
+                    key={p.id} player={p} inGroup={isIn}
+                    onToggle={() => {
+                      isIn ? onRemovePlayer?.(p.id) : onAddPlayer?.(p.id);
+                      onActivity?.();
+                    }}
+                    volume={playerVolumes[p.id]}
+                    onVolumeChange={(v) => { onPlayerVolumeChange?.(p.id, v); onActivity?.(); }}
+                    compact
+                  />
+                );
+              })
+          }
+        </div>
+      </div>
+
+      {/* Master volume — full-width footer */}
       <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)', margin: '6px 0 0' }} />
-      <div style={{ padding: '10px 18px 16px' }}>
-        <div style={{ ...LABEL, padding: '0 0 10px' }}>Master</div>
+      <div style={{ padding: '8px 16px 14px' }}>
+        <div style={{ ...LABEL, padding: '0 0 8px', textAlign: 'left' }}>Master</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ opacity: 0.4, display: 'flex', flexShrink: 0 }}>
             <IconVolumeLow size={14} />
@@ -258,7 +282,7 @@ function SpeakerPanel({
   );
 }
 
-// ─── GroupRow — radio-style toggle for all groups ─────────────────────────
+// ─── GroupRow — radio-style toggle, compact padding ───────────────────────
 function GroupRow({ group, isActive, onSelect }) {
   const playing = group.playbackState === 'PLAYBACK_STATE_PLAYING';
   return (
@@ -266,34 +290,35 @@ function GroupRow({ group, isActive, onSelect }) {
       onClick={isActive ? undefined : onSelect}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        width: '100%', padding: '8px 18px',
+        width: '100%', padding: '7px 12px',
         background: 'transparent', border: 'none', color: '#fff',
         cursor: isActive ? 'default' : 'pointer', textAlign: 'left',
         fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontSize: 13, fontWeight: 500 }}>{group.name}</span>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, marginRight: 6 }}>
         <span style={{
-          fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+          fontSize: 12, fontWeight: 500,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{group.name}</span>
+        <span style={{
+          fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase',
           fontFamily: '"JetBrains Mono", ui-monospace, monospace',
           color: playing ? 'rgba(62,207,106,0.85)' : 'rgba(255,255,255,0.3)',
         }}>
           {playing ? 'playing' : 'paused'}
         </span>
       </span>
-      {/* Toggle pill — green ON when active, gray OFF otherwise */}
       <span style={{
         display: 'block', flexShrink: 0,
-        width: 34, height: 20, borderRadius: 999,
+        width: 30, height: 18, borderRadius: 999,
         background: isActive ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
-        position: 'relative',
-        transition: 'background .18s',
+        position: 'relative', transition: 'background .18s',
       }}>
         <span style={{
-          position: 'absolute', top: 2, left: isActive ? 14 : 2,
-          width: 16, height: 16, borderRadius: '50%',
+          position: 'absolute', top: 2, left: isActive ? 12 : 2,
+          width: 14, height: 14, borderRadius: '50%',
           background: '#fff', transition: 'left .18s',
           boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
         }} />
@@ -324,44 +349,43 @@ function SourceRow({ group, onClick }) {
           {playing ? 'playing' : 'paused'}
         </span>
       </span>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-           stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
     </button>
   );
 }
 
 // ─── SpeakerRow ───────────────────────────────────────────────────────────
-function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange }) {
+function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange, compact = false }) {
+  const px = compact ? 12 : 18;
   return (
     <div style={{
-      padding: '7px 18px 4px',
+      padding: `6px ${px}px 4px`,
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: inGroup ? 6 : 3,
+        marginBottom: inGroup ? 5 : 2,
       }}>
         <span style={{
-          fontSize: 13, fontWeight: 500,
+          fontSize: 12, fontWeight: 500,
           color: inGroup ? '#fff' : 'rgba(255,255,255,0.45)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flex: 1, marginRight: 6,
         }}>
           {player.name}
         </span>
         <button onClick={onToggle} style={{
-          background: 'transparent', border: 'none', padding: 0,
-          cursor: 'pointer', flexShrink: 0, WebkitTapHighlightColor: 'transparent',
+          background: 'transparent', border: 'none', padding: 0, flexShrink: 0,
+          cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
         }}>
           <span style={{
             display: 'block',
-            width: 34, height: 20, borderRadius: 999,
+            width: 30, height: 18, borderRadius: 999,
             background: inGroup ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
             position: 'relative', transition: 'background .18s',
           }}>
             <span style={{
-              position: 'absolute', top: 2, left: inGroup ? 14 : 2,
-              width: 16, height: 16, borderRadius: '50%',
+              position: 'absolute', top: 2, left: inGroup ? 12 : 2,
+              width: 14, height: 14, borderRadius: '50%',
               background: '#fff', transition: 'left .18s',
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
             }} />
@@ -370,7 +394,7 @@ function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange }) {
       </div>
 
       {inGroup && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 4 }}>
           <div style={{
             flex: 1, position: 'relative', height: 2,
             background: 'rgba(255,255,255,0.1)', borderRadius: 999,
@@ -387,8 +411,7 @@ function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange }) {
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
             }} />
             <input
-              type="range" min="0" max="100"
-              value={volume ?? 50}
+              type="range" min="0" max="100" value={volume ?? 50}
               onChange={(e) => onVolumeChange?.(Number(e.target.value))}
               style={{
                 position: 'absolute', inset: -6, width: 'calc(100% + 12px)',
@@ -397,7 +420,7 @@ function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange }) {
             />
           </div>
           <div style={{
-            minWidth: 20, textAlign: 'right',
+            minWidth: 18, textAlign: 'right',
             fontFamily: '"JetBrains Mono", ui-monospace, monospace',
             fontSize: 9, letterSpacing: '0.1em',
             color: 'rgba(255,255,255,0.38)', fontVariantNumeric: 'tabular-nums',
@@ -443,4 +466,5 @@ function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
 
 function VerticalVolumeSlider({ volume, onChange, scale = 1 }) { return null; }
 
-Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider, SpeakerPanel, SourceRow, GroupRow, SpeakerRow, fmt });
+Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider,
+                         SpeakerPanel, SourceRow, GroupRow, SpeakerRow, fmt });

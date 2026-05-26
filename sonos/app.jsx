@@ -379,17 +379,10 @@ function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const { data, actions, refreshPlayerVolumes } = useSonos();
 
-  const [speakerOpen,    setSpeakerOpen]    = useState(false);
-  const [controlsActive, setControlsActive] = useState(false);
+  const [speakerOpen, setSpeakerOpen] = useState(false);
 
-  const controlsTimer = useRef(null);
-  const speakerTimer  = useRef(null);
+  const speakerTimer = useRef(null);
 
-  const wakeControls = () => {
-    setControlsActive(true);
-    clearTimeout(controlsTimer.current);
-    controlsTimer.current = setTimeout(() => setControlsActive(false), 10000);
-  };
   const resetSpeakerTimer = () => {
     clearTimeout(speakerTimer.current);
     speakerTimer.current = setTimeout(() => setSpeakerOpen(false), 15000);
@@ -397,9 +390,9 @@ function App() {
 
   useEffect(() => { if (speakerOpen) resetSpeakerTimer(); }, [speakerOpen]);
 
-  const onSpeakerClick   = () => { setSpeakerOpen(v => !v); };
-  const onCloseSpeaker   = () => { setSpeakerOpen(false); };
-  const onSpeakerActivity = () => { resetSpeakerTimer(); wakeControls(); };
+  const onSpeakerClick    = () => { setSpeakerOpen(v => !v); };
+  const onCloseSpeaker    = () => { setSpeakerOpen(false); };
+  const onSpeakerActivity = () => { resetSpeakerTimer(); };
 
   // Fetch per-player volumes whenever the speaker panel opens
   useEffect(() => {
@@ -445,17 +438,15 @@ function App() {
     playerVolumes: data.playerVolumes,
     rooms: data.groups, players: data.players, roomsActive,
     activeGroupId: data.activeGroupId,
-    controlsActive, onWake: wakeControls,
     track: data.track || {},
     positionSecs: data.positionSecs,
-    onPause:              () => { actions.togglePlay(); wakeControls(); },
-    onSkipBack:           () => { actions.skipPrev();   wakeControls(); },
-    onSkipForward:        () => { actions.skipNext();   wakeControls(); },
-    onSpeakerClick:       () => { onSpeakerClick(); wakeControls(); },
+    onPause:       actions.togglePlay,
+    onSkipBack:    actions.skipPrev,
+    onSkipForward: actions.skipNext,
+    onSpeakerClick,
     onCloseSpeaker,
     onSpeakerActivity,
     onMasterVolumeChange: (v) => {
-      // Proportionally scale all per-player volumes (master acts as a macro)
       const oldMaster = data.volume;
       const activeGroup = data.groups.find(g => g.active);
       if (activeGroup?.playerIds) {
@@ -470,12 +461,11 @@ function App() {
         });
       }
       actions.setVolume(v);
-      wakeControls();
     },
-    onPlayerVolumeChange: (id, v) => { actions.setPlayerVol(id, v); wakeControls(); },
-    onSwitchGroup:        (id) => { actions.switchGroup(id);     wakeControls(); },
-    onAddPlayer:          (id) => { actions.addToGroup(id);      wakeControls(); },
-    onRemovePlayer:       (id) => { actions.removeFromGroup(id); wakeControls(); },
+    onPlayerVolumeChange: (id, v) => { actions.setPlayerVol(id, v); },
+    onSwitchGroup:        (id) => { actions.switchGroup(id); },
+    onAddPlayer:          (id) => { actions.addToGroup(id); },
+    onRemovePlayer:       (id) => { actions.removeFromGroup(id); },
     typeScale, lines: t.spineLines,
   };
 
@@ -649,7 +639,6 @@ function LandscapeLayout({
   volume, speakerOpen,
   playerVolumes = {}, onPlayerVolumeChange, onMasterVolumeChange,
   rooms = [], players = [], roomsActive, activeGroupId,
-  controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
   onSpeakerClick, onCloseSpeaker, onSpeakerActivity,
   onSwitchGroup, onAddPlayer, onRemovePlayer,
@@ -710,10 +699,9 @@ function LandscapeLayout({
         position: 'relative', zIndex: 20,
       }}>
         <Controls width={controlW} vinyl={vinyl} paused={paused}
-                  active={controlsActive} onWake={onWake}
                   onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
                   onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
-                  roomsActive={roomsActive} scale={typeScale} />
+                  scale={typeScale} />
 
         <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0,
                       display: 'flex', justifyContent: 'center' }}>

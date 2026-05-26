@@ -5,15 +5,14 @@ function PortraitLayout({
   volume, speakerOpen,
   playerVolumes = {}, onPlayerVolumeChange, onMasterVolumeChange,
   rooms = [], players = [], roomsActive, activeGroupId,
-  controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
   onSpeakerClick, onCloseSpeaker, onSpeakerActivity,
   onSwitchGroup, onAddPlayer, onRemovePlayer,
   compact = false, lines = 3, track = {},
 }) {
   const s = compact ? 0.5 : 1;
-  const sideMargin = compact ? 22 : 60;
-  const diReserve = compact ? 56 : 0;
+  const sideMargin    = compact ? 22 : 60;
+  const diReserve     = compact ? 56 : 0;
   const minSideMargin = compact ? 90 : 170;
   const artSize = Math.min(
     width - sideMargin * 2,
@@ -77,7 +76,6 @@ function PortraitLayout({
       }}>
         <HorizontalControls
           vinyl={vinyl} paused={paused}
-          active={controlsActive} onWake={onWake}
           onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
           onSpeakerClick={onSpeakerClick}
           speakerOpen={speakerOpen}
@@ -89,24 +87,44 @@ function PortraitLayout({
 }
 
 // ─── Horizontal controls dock ─────────────────────────────────────────────
+// Manages its own active/dim state — no active/onWake props needed.
+// Speaker button is fully independent.
 function HorizontalControls({
-  vinyl, paused, active, onWake,
-  onPause, onSkipBack, onSkipForward,
+  vinyl, paused, onPause, onSkipBack, onSkipForward,
   onSpeakerClick, speakerOpen = false, scale = 1,
 }) {
-  const { useState } = React;
-  const [hovered, setHovered] = useState(false);
+  const { useState, useRef } = React;
+  const [active,      setActive]      = useState(false);
+  const [lastPressed, setLastPressed] = useState(null);
+  const activeTimer = useRef(null);
+  const pressTimer  = useRef(null);
+
+  const wake = () => {
+    setActive(true);
+    clearTimeout(activeTimer.current);
+    activeTimer.current = setTimeout(() => setActive(false), 10000);
+  };
+
+  const handlePress = (id, action) => {
+    action?.();
+    wake();
+    setLastPressed(id);
+    clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => setLastPressed(null), 5000);
+  };
+
+  const getColor = (id) => {
+    if (!active) return 'rgba(255,255,255,0.22)';
+    if (lastPressed === id) return '#fff';
+    return 'rgba(255,255,255,0.5)';
+  };
 
   return (
     <div
-      onPointerDown={onWake}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onPointerDown={wake}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: vinyl ? 120 * scale : 64 * scale,
-        opacity: (active || hovered || speakerOpen) ? 1 : 0.22,
-        transition: 'opacity .4s cubic-bezier(.3,.7,.4,1)',
       }}
     >
       {/* Playback */}
@@ -115,28 +133,38 @@ function HorizontalControls({
           display: 'flex', flexDirection: 'row', alignItems: 'center',
           gap: 18 * scale,
         }}>
-          <ControlButton onClick={onSkipBack} label="Previous track" size={40 * scale}>
-            <span style={{ opacity: 0.78 }}><IconSkipBack size={22 * scale} /></span>
+          <ControlButton
+            onClick={() => handlePress('back', onSkipBack)}
+            label="Previous track" size={40 * scale} color={getColor('back')}
+          >
+            <IconSkipBack size={22 * scale} />
           </ControlButton>
-          <ControlButton onClick={onPause} primary label={paused ? 'Play' : 'Pause'}>
+          <ControlButton
+            onClick={() => handlePress('pause', onPause)}
+            size={56 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
+          >
             {paused ? <IconPlay size={28 * scale} /> : <IconPause size={26 * scale} />}
           </ControlButton>
-          <ControlButton onClick={onSkipForward} label="Next track" size={40 * scale}>
-            <span style={{ opacity: 0.78 }}><IconSkipForward size={22 * scale} /></span>
+          <ControlButton
+            onClick={() => handlePress('forward', onSkipForward)}
+            label="Next track" size={40 * scale} color={getColor('forward')}
+          >
+            <IconSkipForward size={22 * scale} />
           </ControlButton>
         </div>
       )}
 
-      {/* Speaker button — no circle ever, just gray or white */}
+      {/* Speaker button — independent, never wakes playback controls */}
       <button
         onClick={onSpeakerClick}
+        onPointerDown={(e) => e.stopPropagation()}
         aria-label="Speakers"
         style={{
           width: 44 * scale, height: 44 * scale,
           border: 'none', background: 'transparent', padding: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer',
-          color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.6)',
+          color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.35)',
           transition: 'color .18s',
           WebkitTapHighlightColor: 'transparent',
         }}
