@@ -28,7 +28,7 @@ const SonosAPI = {
     localStorage.setItem(STATE_KEY, state);
     const p = new URLSearchParams({
       client_id:     SONOS_CONFIG.clientId,
-      response_type: 'token',   // implicit grant — token returned in hash, no exchange needed
+      response_type: 'code',
       redirect_uri:  SONOS_CONFIG.redirectUri,
       state,
     });
@@ -61,18 +61,16 @@ const SonosAPI = {
   },
 
   async _tokenRequest(body) {
-    // Send client credentials in the body rather than the Authorization header.
-    // This avoids a CORS preflight (application/x-www-form-urlencoded with no
-    // custom headers is a "simple" request that doesn't need a preflight).
-    const params = new URLSearchParams({
-      ...body,
-      client_id:     SONOS_CONFIG.clientId,
-      client_secret: SONOS_CONFIG.clientSecret,
-    });
-    const res = await fetch(SONOS_TOKEN, {
+    // Route through Cloudflare Worker proxy to avoid CORS on the Sonos token endpoint
+    const endpoint = SONOS_CONFIG.tokenProxy || SONOS_TOKEN;
+    const creds = btoa(`${SONOS_CONFIG.clientId}:${SONOS_CONFIG.clientSecret}`);
+    const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params,
+      headers: {
+        'Authorization': `Basic ${creds}`,
+        'Content-Type':  'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(body),
     });
     if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
     return res.json();
