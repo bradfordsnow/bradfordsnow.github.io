@@ -168,6 +168,23 @@ function Root() {
       return;
     }
 
+    // Implicit grant — token in hash fragment (#access_token=...&expires_in=...)
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const implicitToken = hash.get('access_token');
+    if (implicitToken) {
+      const expiresIn = parseInt(hash.get('expires_in') || '3600', 10);
+      SonosAPI._saveTokens({
+        access_token:  implicitToken,
+        refresh_token: null,
+        expires_in:    expiresIn,
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+      localStorage.setItem(SETUP_KEY, '1');
+      setPhase('ready');
+      return;
+    }
+
+    // Authorization code — exchange for token (requires CORS-friendly token endpoint)
     if (code) {
       setPhase('exchanging');
       SonosAPI.exchangeCode(code, state)
@@ -178,7 +195,6 @@ function Root() {
         })
         .catch(err => {
           console.error('OAuth exchange failed:', err);
-          // Clean the URL so a reload doesn't retry the same dead code
           window.history.replaceState({}, '', window.location.pathname);
           setAuthError(err.message);
           setPhase('error');

@@ -28,15 +28,12 @@ const SonosAPI = {
     localStorage.setItem(STATE_KEY, state);
     const p = new URLSearchParams({
       client_id:     SONOS_CONFIG.clientId,
-      response_type: 'code',
+      response_type: 'token',   // implicit grant — token returned in hash, no exchange needed
       redirect_uri:  SONOS_CONFIG.redirectUri,
       state,
     });
-    // Only append scope if one is configured — Sonos may reject unknown scopes
     if (SONOS_CONFIG.scope) p.set('scope', SONOS_CONFIG.scope);
-    const url = `${SONOS_OAUTH}?${p}`;
-    console.log('[Sonos] OAuth URL →', url);
-    return url;
+    return `${SONOS_OAUTH}?${p}`;
   },
 
   async exchangeCode(code, returnedState) {
