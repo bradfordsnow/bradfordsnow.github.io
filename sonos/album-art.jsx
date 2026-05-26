@@ -1,23 +1,10 @@
 // album-art.jsx — Shows real artwork from the Sonos API, falls back to placeholder.
 
 function AlbumArt({ size = 1024, url = '' }) {
-  if (url) {
-    return (
-      <div style={{
-        position: 'relative', width: size, height: size, flexShrink: 0,
-        boxShadow: '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset',
-        overflow: 'hidden', background: '#111',
-      }}>
-        <img
-          src={url}
-          alt="Album art"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
-      </div>
-    );
-  }
-  // Placeholder when no art available
-  return (
+  const { useState } = React;
+  const [failed, setFailed] = useState(false);
+
+  const Placeholder = () => (
     <div style={{
       position: 'relative', width: size, height: size, flexShrink: 0,
       background: '#1a1a1e',
@@ -31,6 +18,24 @@ function AlbumArt({ size = 1024, url = '' }) {
         <line x1="12" y1="2" x2="12" y2="5" />
         <line x1="12" y1="19" x2="12" y2="22" />
       </svg>
+    </div>
+  );
+
+  if (!url || failed) return <Placeholder />;
+
+  return (
+    <div style={{
+      position: 'relative', width: size, height: size, flexShrink: 0,
+      boxShadow: '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset',
+      overflow: 'hidden', background: '#111',
+    }}>
+      <img
+        src={url}
+        alt="Album art"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        onError={() => { console.warn('[AlbumArt] failed to load:', url); setFailed(true); }}
+        onLoad={() => setFailed(false)}
+      />
     </div>
   );
 }

@@ -51,7 +51,7 @@ function PortraitLayout({
       }}>
         {vinyl
           ? <VinylMode width={artSize} height={artSize} paused={paused} />
-          : <AlbumArt size={artSize} />}
+          : <AlbumArt size={artSize} url={track?.artworkUrl} />}
 
         {speakerOpen && (
           <SpeakerPanel
