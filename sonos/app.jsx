@@ -165,6 +165,14 @@ function Root() {
     const code   = params.get('code');
     const state  = params.get('state');
 
+    // ?logout in URL wipes tokens and starts fresh
+    if (params.has('logout')) {
+      SonosAPI.logout();
+      window.history.replaceState({}, '', window.location.pathname);
+      setPhase('onboarding');
+      return;
+    }
+
     if (!SonosAPI.isConfigured()) {
       setPhase('unconfigured');
       return;
