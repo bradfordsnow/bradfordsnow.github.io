@@ -162,6 +162,15 @@ function SpeakerPanel({
   const allGroups = [...rooms].sort((a, b) => a.name.localeCompare(b.name));
   const sorted    = [...players].sort((a, b) => a.name.localeCompare(b.name));
 
+  // Master slider value = average of active-group speaker volumes
+  const activeSpeakers = sorted.filter(p => activePlayerIds.has(p.id));
+  const masterVol = activeSpeakers.length > 0
+    ? Math.round(
+        activeSpeakers.reduce((sum, p) => sum + (playerVolumes[p.id] ?? 50), 0)
+        / activeSpeakers.length
+      )
+    : 50;
+
   const LABEL = {
     padding: '10px 12px 6px',
     fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
@@ -239,7 +248,7 @@ function SpeakerPanel({
       {/* Master volume — full-width footer */}
       <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)', margin: '6px 0 0' }} />
       <div style={{ padding: '8px 16px 14px' }}>
-        <div style={{ ...LABEL, padding: '0 0 8px', textAlign: 'left' }}>Master</div>
+        <div style={{ ...LABEL, padding: '0 0 8px', textAlign: 'left' }}>Master Volume</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ opacity: 0.4, display: 'flex', flexShrink: 0 }}>
             <IconVolumeLow size={14} />
@@ -250,15 +259,15 @@ function SpeakerPanel({
           }}>
             <div style={{
               position: 'absolute', left: 0, top: 0, height: '100%',
-              width: `${volume}%`, background: 'rgba(255,255,255,0.8)', borderRadius: 999,
+              width: `${masterVol}%`, background: 'rgba(255,255,255,0.8)', borderRadius: 999,
             }} />
             <div style={{
-              position: 'absolute', left: `${volume}%`, top: '50%',
+              position: 'absolute', left: `${masterVol}%`, top: '50%',
               width: 13, height: 13, borderRadius: '50%',
               background: '#fff', transform: 'translate(-50%, -50%)',
               boxShadow: '0 1px 5px rgba(0,0,0,0.5)',
             }} />
-            <input type="range" min="0" max="100" value={volume}
+            <input type="range" min="0" max="100" value={masterVol}
                    onChange={(e) => { onMasterVolumeChange?.(Number(e.target.value)); onActivity?.(); }}
                    style={{
                      position: 'absolute', inset: -8, width: 'calc(100% + 16px)',
@@ -268,14 +277,6 @@ function SpeakerPanel({
           <span style={{ opacity: 0.65, display: 'flex', flexShrink: 0 }}>
             <IconVolumeHigh size={14} />
           </span>
-          <div style={{
-            minWidth: 22, textAlign: 'right',
-            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-            fontSize: 10, letterSpacing: '0.06em',
-            color: 'rgba(255,255,255,0.5)', fontVariantNumeric: 'tabular-nums',
-          }}>
-            {volume}
-          </div>
         </div>
       </div>
     </div>

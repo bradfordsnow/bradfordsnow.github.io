@@ -447,20 +447,25 @@ function App() {
     onCloseSpeaker,
     onSpeakerActivity,
     onMasterVolumeChange: (v) => {
-      const oldMaster = data.volume;
       const activeGroup = data.groups.find(g => g.active);
-      if (activeGroup?.playerIds) {
-        activeGroup.playerIds.forEach(pid => {
-          const pVol = data.playerVolumes[pid];
-          if (typeof pVol === 'number') {
-            const newVol = oldMaster > 0
-              ? Math.min(100, Math.max(0, Math.round(pVol * v / oldMaster)))
-              : v;
-            actions.setPlayerVol(pid, newVol);
-          }
-        });
-      }
-      actions.setVolume(v);
+      if (!activeGroup?.playerIds) return;
+      // Baseline = average of actual per-speaker volumes (not group-level volume)
+      const vols = activeGroup.playerIds
+        .map(pid => data.playerVolumes[pid])
+        .filter(pv => typeof pv === 'number');
+      const oldMaster = vols.length > 0
+        ? Math.round(vols.reduce((a, b) => a + b, 0) / vols.length)
+        : 0;
+      activeGroup.playerIds.forEach(pid => {
+        const pVol = data.playerVolumes[pid];
+        if (typeof pVol === 'number') {
+          const newVol = oldMaster > 0
+            ? Math.min(100, Math.max(0, Math.round(pVol * v / oldMaster)))
+            : v;
+          actions.setPlayerVol(pid, newVol);
+        }
+      });
+      // No setVolume() — master only scales individual speaker volumes proportionally
     },
     onPlayerVolumeChange: (id, v) => { actions.setPlayerVol(id, v); },
     onSwitchGroup:        (id) => { actions.switchGroup(id); },
