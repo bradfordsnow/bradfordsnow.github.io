@@ -10,17 +10,6 @@
 
 const { useState, useEffect, useRef, useCallback } = React;
 
-// Attempt to get the highest-res version of a Sonos artwork URL.
-// Sonos returns URLs with small size hints — we try common patterns to upscale.
-function hiResArt(url) {
-  if (!url) return '';
-  return url
-    .replace(/size=x\d+_y\d+/gi,  'size=x1000_y1000')  // ?size=x200_y200
-    .replace(/\/\d+x\d+\.(jpg|png|webp)/gi, '/1000x1000.$1') // /200x200.jpg
-    .replace(/_\d+x\d+\.(jpg|png|webp)/gi,  '_1000x1000.$1') // _200x200.jpg
-    .replace(/width=\d+/gi,  'width=1000')
-    .replace(/height=\d+/gi, 'height=1000');
-}
 
 const TWEAK_DEFAULTS = {
   device:      'ipad',
@@ -84,7 +73,7 @@ function useSonos() {
           song:        rawTrack.name,
           album:       rawTrack.album?.name || '',
           year:        '',
-          artworkUrl:  hiResArt(rawTrack.imageUrl || meta?.container?.imageUrl),
+          artworkUrl:  rawTrack.imageUrl || meta?.container?.imageUrl || '',
           durationSecs:(rawTrack.durationMillis || 0) / 1000,
         };
       } else if (meta?.container?.name) {
@@ -93,7 +82,7 @@ function useSonos() {
           song:        meta.streamInfo || '',
           album:       '',
           year:        '',
-          artworkUrl:  hiResArt(meta.container.imageUrl),
+          artworkUrl:  meta.container.imageUrl || '',
           durationSecs:0,
         };
       }
