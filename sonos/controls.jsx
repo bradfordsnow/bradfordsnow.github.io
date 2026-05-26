@@ -55,16 +55,28 @@ function Controls({ width, vinyl, paused, active, onWake,
         )}
       </div>
 
-      {/* Bottom — speaker button */}
+      {/* Bottom — speaker button: no circle ever, just gray or white */}
       <div style={{
         flex: 1.4,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'flex-end',
         paddingBottom: 90 * scale,
       }}>
-        <ControlButton onClick={onSpeakerClick} label="Speakers" size={53 * scale} active={speakerOpen}>
+        <button
+          onClick={onSpeakerClick}
+          aria-label="Speakers"
+          style={{
+            width: 53 * scale, height: 53 * scale,
+            border: 'none', background: 'transparent', padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.6)',
+            transition: 'color .18s',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
           <IconSpeaker size={29 * scale} />
-        </ControlButton>
+        </button>
       </div>
     </div>
   );
@@ -135,6 +147,10 @@ function SpeakerPanel({
     fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
     fontWeight: 500,
     color: 'rgba(255,255,255,0.35)',
+    textAlign: 'center',
+    textDecoration: 'underline',
+    textDecorationColor: 'rgba(255,255,255,0.18)',
+    textUnderlineOffset: '4px',
   };
   const HR = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
 
@@ -159,7 +175,7 @@ function SpeakerPanel({
       {/* All groups as radio-style toggles */}
       {allGroups.length > 0 && (
         <>
-          <div style={LABEL}>Sources</div>
+          <div style={LABEL}>Source</div>
           {allGroups.map(g => (
             <GroupRow
               key={g.id}

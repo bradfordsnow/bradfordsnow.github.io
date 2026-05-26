@@ -127,10 +127,22 @@ function HorizontalControls({
         </div>
       )}
 
-      {/* Speaker button — white when panel open */}
-      <ControlButton onClick={onSpeakerClick} label="Speakers" size={44 * scale} active={speakerOpen}>
+      {/* Speaker button — no circle ever, just gray or white */}
+      <button
+        onClick={onSpeakerClick}
+        aria-label="Speakers"
+        style={{
+          width: 44 * scale, height: 44 * scale,
+          border: 'none', background: 'transparent', padding: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          color: speakerOpen ? '#fff' : 'rgba(255,255,255,0.6)',
+          transition: 'color .18s',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
         <IconSpeaker size={24 * scale} />
-      </ControlButton>
+      </button>
     </div>
   );
 }

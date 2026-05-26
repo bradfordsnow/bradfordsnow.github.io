@@ -10,6 +10,11 @@
 
 const { useState, useEffect, useRef, useCallback } = React;
 
+// Returns true for private-network HTTP URLs that won't load on an HTTPS page
+// (mixed-content block + Private Network Access restrictions in modern browsers)
+function _isLocalUrl(url) {
+  return Boolean(url && /^http:\/\/(127\.|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(url));
+}
 
 const TWEAK_DEFAULTS = {
   device:      'ipad',
@@ -67,22 +72,34 @@ function useSonos() {
       const rawTrack = item?.track;
       let track = null;
 
+      // Sonos often returns local-device URLs (http://192.168.x.x:1400/getaa...)
+      // for per-track artwork. These can't load on an HTTPS page (mixed-content /
+      // Private Network Access block). Skip them; container.imageUrl usually has
+      // the real CDN URL (Spotify, Apple Music, etc.).
+      const artCandidates = [
+        rawTrack?.imageUrl,
+        item?.imageUrl,
+        meta?.container?.imageUrl,
+      ];
+      const resolvedArtUrl = artCandidates.find(u => u && !_isLocalUrl(u)) || '';
+
       if (rawTrack?.name) {
         track = {
           artist:      rawTrack.artist?.name || meta?.container?.name || '',
           song:        rawTrack.name,
           album:       rawTrack.album?.name || '',
           year:        '',
-          artworkUrl:  rawTrack.imageUrl || item?.imageUrl || meta?.container?.imageUrl || '',
+          artworkUrl:  resolvedArtUrl,
           durationSecs:(rawTrack.durationMillis || 0) / 1000,
         };
       } else if (meta?.container?.name) {
+        const cArt = meta.container.imageUrl;
         track = {
           artist:      meta.container.name,
           song:        meta.streamInfo || '',
           album:       '',
           year:        '',
-          artworkUrl:  meta.container.imageUrl || '',
+          artworkUrl:  _isLocalUrl(cArt) ? '' : (cArt || ''),
           durationSecs:0,
         };
       }
@@ -98,10 +115,10 @@ function useSonos() {
       const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
       console.log('[Sonos] artwork:', {
-        trackImg:   rawTrack?.imageUrl   || '—',
-        itemImg:    item?.imageUrl       || '—',
-        containerImg: meta?.container?.imageUrl || '—',
-        resolved:   track?.artworkUrl   || 'NONE',
+        track:     rawTrack?.imageUrl        || '—',
+        item:      item?.imageUrl            || '—',
+        container: meta?.container?.imageUrl || '—',
+        resolved:  track?.artworkUrl         || 'NONE (all local or missing)',
       });
 
       setData(d => ({
