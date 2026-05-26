@@ -55,7 +55,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       {/* Playback icons — slightly above center */}
       <div style={{
         position: 'absolute',
-        top: '35%', left: '50%',
+        top: '43%', left: '50%',
         transform: 'translate(-50%, -50%)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center',
