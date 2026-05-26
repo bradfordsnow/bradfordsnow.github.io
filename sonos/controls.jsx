@@ -88,7 +88,7 @@ function ControlButton({ children, onClick, onPointerDown: forwardPD,
       style={{
         width: w, height: w, borderRadius: '50%',
         border: 'none',
-        background: hovered && !primary ? 'rgba(255,255,255,0.08)' : 'transparent',
+        background: (hovered && !primary && !active) ? 'rgba(255,255,255,0.08)' : 'transparent',
         color: (hovered || pressed || active) ? '#fff' : 'rgba(255,255,255,0.75)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', padding: 0,
@@ -131,9 +131,9 @@ function SpeakerPanel({
 
   const LABEL = {
     padding: '10px 18px 6px',
-    fontFamily: '"Cormorant Garamond", serif',
-    fontStyle: 'italic',
-    fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase',
+    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+    fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+    fontWeight: 500,
     color: 'rgba(255,255,255,0.35)',
   };
   const HR = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
@@ -172,39 +172,29 @@ function SpeakerPanel({
         </>
       )}
 
-      {/* Speakers in the active group */}
+      {/* All speakers — toggle = in group (green) or available (gray) */}
       <div style={LABEL}>Speakers</div>
-      {inGroup.length === 0
+      {sorted.length === 0
         ? <div style={{ padding: '4px 18px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
-            No speakers
+            No speakers found
           </div>
-        : inGroup.map(p => (
-            <SpeakerRow
-              key={p.id}
-              player={p}
-              inGroup
-              onToggle={() => { onRemovePlayer?.(p.id); onActivity?.(); }}
-              volume={playerVolumes[p.id]}
-              onVolumeChange={(v) => { onPlayerVolumeChange?.(p.id, v); onActivity?.(); }}
-            />
-          ))
+        : sorted.map(p => {
+            const isIn = activePlayerIds.has(p.id);
+            return (
+              <SpeakerRow
+                key={p.id}
+                player={p}
+                inGroup={isIn}
+                onToggle={() => {
+                  isIn ? onRemovePlayer?.(p.id) : onAddPlayer?.(p.id);
+                  onActivity?.();
+                }}
+                volume={playerVolumes[p.id]}
+                onVolumeChange={(v) => { onPlayerVolumeChange?.(p.id, v); onActivity?.(); }}
+              />
+            );
+          })
       }
-
-      {/* Speakers to add */}
-      {notInGroup.length > 0 && (
-        <>
-          <div style={HR} />
-          <div style={LABEL}>Add speakers</div>
-          {notInGroup.map(p => (
-            <SpeakerRow
-              key={p.id}
-              player={p}
-              inGroup={false}
-              onToggle={() => { onAddPlayer?.(p.id); onActivity?.(); }}
-            />
-          ))}
-        </>
-      )}
 
       {/* Master volume footer */}
       <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)', margin: '6px 0 0' }} />

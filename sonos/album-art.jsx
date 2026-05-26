@@ -1,8 +1,8 @@
-// album-art.jsx — Album artwork. Always shows black background.
-// Uses a native Image() preloader outside React so onload fires reliably
-// even for browser-cached images (React's synthetic onLoad can miss those).
-// Tries hi-res upscaled URL first; falls back to original on error;
-// shows pure black if both fail.
+// album-art.jsx — Album artwork.
+// Renders <img> directly — no onLoad visibility gate (that was the bug:
+// React's synthetic onLoad never fired for cached images, keeping opacity at 0
+// forever). Now the image just appears as soon as the browser has it.
+// Tries hi-res URL first; falls back to original on error; shows black if both fail.
 
 function _hiRes(url) {
   if (!url) return url;
@@ -17,59 +17,42 @@ function _hiRes(url) {
 function AlbumArt({ size = 1024, url = '' }) {
   const { useState, useEffect } = React;
 
-  const [activeSrc, setActiveSrc] = useState('');
-  const [loaded,    setLoaded]    = useState(false);
+  const [src, setSrc] = useState('');
 
   useEffect(() => {
-    if (!url) { setActiveSrc(''); setLoaded(false); return; }
-
+    if (!url) { setSrc(''); return; }
     const hi = _hiRes(url);
-    const firstSrc    = (hi && hi !== url) ? hi : url;
-    const fallbackSrc = (hi && hi !== url) ? url : null;
-
-    setLoaded(false);
-    let cancelled = false;
-
-    const tryLoad = (src, fallback) => {
-      const img = new Image();
-      img.onload  = () => {
-        if (!cancelled) { setActiveSrc(src); setLoaded(true); }
-      };
-      img.onerror = () => {
-        if (!cancelled) {
-          if (fallback) {
-            tryLoad(fallback, null);
-          } else {
-            console.warn('[AlbumArt] both URLs failed:', src);
-            setActiveSrc('');
-            setLoaded(false);
-          }
-        }
-      };
-      img.src = src;
-    };
-
-    tryLoad(firstSrc, fallbackSrc);
-    return () => { cancelled = true; };
+    setSrc((hi && hi !== url) ? hi : url);
   }, [url]);
+
+  const handleError = () => {
+    // hi-res failed — retry with original URL
+    if (src !== url && url) {
+      console.warn('[AlbumArt] hi-res failed, trying original:', url);
+      setSrc(url);
+    } else {
+      // both failed — show black
+      console.warn('[AlbumArt] both URLs failed for:', url);
+      setSrc('');
+    }
+  };
 
   return (
     <div style={{
       width: size, height: size, flexShrink: 0,
       background: '#000',
-      boxShadow: loaded
-        ? '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset'
-        : 'none',
       overflow: 'hidden',
     }}>
-      {loaded && activeSrc && (
+      {src && (
         <img
-          src={activeSrc}
+          key={src}
+          src={src}
           alt=""
           style={{
             width: '100%', height: '100%',
             objectFit: 'cover', display: 'block',
           }}
+          onError={handleError}
         />
       )}
     </div>
