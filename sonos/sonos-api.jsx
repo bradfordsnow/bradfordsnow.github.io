@@ -30,10 +30,13 @@ const SonosAPI = {
       client_id:     SONOS_CONFIG.clientId,
       response_type: 'code',
       redirect_uri:  SONOS_CONFIG.redirectUri,
-      scope:         SONOS_CONFIG.scope,
       state,
     });
-    return `${SONOS_OAUTH}?${p}`;
+    // Only append scope if one is configured — Sonos may reject unknown scopes
+    if (SONOS_CONFIG.scope) p.set('scope', SONOS_CONFIG.scope);
+    const url = `${SONOS_OAUTH}?${p}`;
+    console.log('[Sonos] OAuth URL →', url);
+    return url;
   },
 
   async exchangeCode(code, returnedState) {
