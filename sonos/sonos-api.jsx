@@ -52,12 +52,22 @@ const SonosAPI = {
 
   async _refresh() {
     const t = this._tokens();
-    if (!t?.refresh_token) throw new Error('No refresh token');
-    const data = await this._tokenRequest({
-      grant_type:    'refresh_token',
-      refresh_token: t.refresh_token,
-    });
-    this._saveTokens(data);
+    if (!t?.refresh_token) {
+      this.logout(); // no refresh token — wipe and force re-auth
+      throw new Error('No refresh token — please reconnect');
+    }
+    try {
+      const data = await this._tokenRequest({
+        grant_type:    'refresh_token',
+        refresh_token: t.refresh_token,
+      });
+      this._saveTokens(data);
+    } catch (err) {
+      // Invalid/expired refresh token — wipe stored tokens so the app
+      // sends the user back to the connect screen on next load
+      this.logout();
+      throw err;
+    }
   },
 
   async _tokenRequest(body) {
