@@ -1,8 +1,6 @@
 // album-art.jsx — Album artwork.
-// Renders <img> directly — no onLoad visibility gate (that was the bug:
-// React's synthetic onLoad never fired for cached images, keeping opacity at 0
-// forever). Now the image just appears as soon as the browser has it.
-// Tries hi-res URL first; falls back to original on error; shows black if both fail.
+// Tries hi-res URL first; falls back to original on error; shows black + debug
+// text if both fail (or if no URL was given).
 
 function _hiRes(url) {
   if (!url) return url;
@@ -17,7 +15,12 @@ function _hiRes(url) {
 function AlbumArt({ size = 1024, url = '' }) {
   const { useState, useEffect } = React;
 
-  const [src, setSrc] = useState('');
+  // Initialize synchronously so there's no flash of debug text on first render
+  const [src, setSrc] = useState(() => {
+    if (!url) return '';
+    const hi = _hiRes(url);
+    return (hi && hi !== url) ? hi : url;
+  });
 
   useEffect(() => {
     if (!url) { setSrc(''); return; }
@@ -26,24 +29,24 @@ function AlbumArt({ size = 1024, url = '' }) {
   }, [url]);
 
   const handleError = () => {
-    // hi-res failed — retry with original URL
     if (src !== url && url) {
       console.warn('[AlbumArt] hi-res failed, trying original:', url);
       setSrc(url);
     } else {
-      // both failed — show black
-      console.warn('[AlbumArt] both URLs failed for:', url);
+      console.warn('[AlbumArt] load failed:', url || '(no url)');
       setSrc('');
     }
   };
 
+  const labelSize = Math.max(9, Math.floor(size * 0.013));
+
   return (
     <div style={{
       width: size, height: size, flexShrink: 0,
-      background: '#000',
-      overflow: 'hidden',
+      background: '#000', overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {src && (
+      {src ? (
         <img
           key={src}
           src={src}
@@ -54,6 +57,21 @@ function AlbumArt({ size = 1024, url = '' }) {
           }}
           onError={handleError}
         />
+      ) : (
+        /* Visible debug — shows URL we tried (or "no URL") so we can diagnose
+           without opening dev tools. Remove once artwork is confirmed working. */
+        <div style={{
+          padding: `0 ${Math.round(size * 0.04)}px`,
+          textAlign: 'center',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          fontSize: labelSize,
+          color: 'rgba(255,255,255,0.2)',
+          lineHeight: 1.65,
+          wordBreak: 'break-all',
+          userSelect: 'text',
+        }}>
+          {url ? url : 'No artwork URL from API'}
+        </div>
       )}
     </div>
   );

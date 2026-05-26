@@ -73,7 +73,7 @@ function useSonos() {
           song:        rawTrack.name,
           album:       rawTrack.album?.name || '',
           year:        '',
-          artworkUrl:  rawTrack.imageUrl || meta?.container?.imageUrl || '',
+          artworkUrl:  rawTrack.imageUrl || item?.imageUrl || meta?.container?.imageUrl || '',
           durationSecs:(rawTrack.durationMillis || 0) / 1000,
         };
       } else if (meta?.container?.name) {
@@ -97,9 +97,12 @@ function useSonos() {
 
       const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
-      if (track?.artworkUrl) {
-        console.log('[Sonos] artworkUrl:', track.artworkUrl);
-      }
+      console.log('[Sonos] artwork:', {
+        trackImg:   rawTrack?.imageUrl   || '—',
+        itemImg:    item?.imageUrl       || '—',
+        containerImg: meta?.container?.imageUrl || '—',
+        resolved:   track?.artworkUrl   || 'NONE',
+      });
 
       setData(d => ({
         ...d,
