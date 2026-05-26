@@ -4,24 +4,7 @@ function AlbumArt({ size = 1024, url = '' }) {
   const { useState } = React;
   const [failed, setFailed] = useState(false);
 
-  const Placeholder = () => (
-    <div style={{
-      position: 'relative', width: size, height: size, flexShrink: 0,
-      background: '#1a1a1e',
-      boxShadow: '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <svg width={size * 0.18} height={size * 0.18} viewBox="0 0 24 24"
-           fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeLinecap="round">
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="3" />
-        <line x1="12" y1="2" x2="12" y2="5" />
-        <line x1="12" y1="19" x2="12" y2="22" />
-      </svg>
-    </div>
-  );
-
-  if (!url || failed) return <Placeholder />;
+  if (!url || failed) return <div style={{ width: size, height: size, flexShrink: 0, background: '#000' }} />;
 
   return (
     <div style={{
