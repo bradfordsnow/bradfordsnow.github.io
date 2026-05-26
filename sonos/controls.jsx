@@ -49,14 +49,14 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       onPointerDown={wake}
       style={{
         width, height: '100%', background: '#000',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        position: 'relative',
       }}
     >
-      {/* Push group to ~2/3 down */}
-      <div style={{ flex: 2 }} />
-
-      {/* All 4 icons grouped together */}
+      {/* Playback icons — vertically centered */}
       <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center',
         gap: 18 * scale,
@@ -83,7 +83,14 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
             </ControlButton>
           </>
         )}
-        {/* Speaker — independent, never wakes playback controls */}
+      </div>
+
+      {/* Speaker — midway between playback center and the bottom countdown */}
+      <div style={{
+        position: 'absolute',
+        top: '73%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+      }}>
         <button
           onClick={onSpeakerClick}
           onPointerDown={(e) => e.stopPropagation()}
@@ -101,9 +108,6 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           <IconSpeaker size={29 * scale} />
         </button>
       </div>
-
-      {/* Bottom spacer */}
-      <div style={{ flex: 1 }} />
     </div>
   );
 }

@@ -38,15 +38,13 @@ function AlbumArt({ size = 1024, url = '' }) {
     }
   };
 
-  const labelSize = Math.max(9, Math.floor(size * 0.013));
-
   return (
     <div style={{
       width: size, height: size, flexShrink: 0,
       background: '#000', overflow: 'hidden',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {src ? (
+      {src && (
         <img
           key={src}
           src={src}
@@ -57,21 +55,6 @@ function AlbumArt({ size = 1024, url = '' }) {
           }}
           onError={handleError}
         />
-      ) : (
-        /* Visible debug — shows URL we tried (or "no URL") so we can diagnose
-           without opening dev tools. Remove once artwork is confirmed working. */
-        <div style={{
-          padding: `0 ${Math.round(size * 0.04)}px`,
-          textAlign: 'center',
-          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontSize: labelSize,
-          color: 'rgba(255,255,255,0.2)',
-          lineHeight: 1.65,
-          wordBreak: 'break-all',
-          userSelect: 'text',
-        }}>
-          {url ? url : 'No artwork URL from API'}
-        </div>
       )}
     </div>
   );

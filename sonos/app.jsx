@@ -133,7 +133,7 @@ function useSonos() {
         track,
         positionSecs:  posSecs,
         volume:        vol?.volume ?? d.volume,
-        vinyl:         playing && !track,
+        vinyl:         playing && (!track || !track.artworkUrl),
       }));
     } catch (err) {
       console.warn('Sonos poll error:', err.message);
