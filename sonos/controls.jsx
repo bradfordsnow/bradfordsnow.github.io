@@ -88,7 +88,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       {/* Speaker — midway between playback center and the bottom countdown */}
       <div style={{
         position: 'absolute',
-        top: '73%', left: '50%',
+        top: '80%', left: '50%',
         transform: 'translate(-50%, -50%)',
       }}>
         <button
