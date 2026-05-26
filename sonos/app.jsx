@@ -97,6 +97,10 @@ function useSonos() {
 
       const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
+      if (track?.artworkUrl) {
+        console.log('[Sonos] artworkUrl:', track.artworkUrl);
+      }
+
       setData(d => ({
         ...d,
         loading:       false,
@@ -688,7 +692,7 @@ function LandscapeLayout({
         <Controls width={controlW} vinyl={vinyl} paused={paused}
                   active={controlsActive} onWake={onWake}
                   onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
-                  onSpeakerClick={onSpeakerClick}
+                  onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
                   roomsActive={roomsActive} scale={typeScale} />
 
         <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0,

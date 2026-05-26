@@ -1,7 +1,8 @@
 // album-art.jsx — Album artwork. Always shows black background.
-// Image is hidden via CSS until it fully loads (prevents alt-text / broken
-// image display). Tries a hi-res upscaled URL first; falls back to the
-// original URL on error; shows pure black if both fail.
+// Uses a native Image() preloader outside React so onload fires reliably
+// even for browser-cached images (React's synthetic onLoad can miss those).
+// Tries hi-res upscaled URL first; falls back to original on error;
+// shows pure black if both fail.
 
 function _hiRes(url) {
   if (!url) return url;
@@ -16,48 +17,59 @@ function _hiRes(url) {
 function AlbumArt({ size = 1024, url = '' }) {
   const { useState, useEffect } = React;
 
-  const [src,    setSrc]    = useState('');
-  const [visible, setVisible] = useState(false);
+  const [activeSrc, setActiveSrc] = useState('');
+  const [loaded,    setLoaded]    = useState(false);
 
   useEffect(() => {
-    if (!url) { setSrc(''); setVisible(false); return; }
-    const hi = _hiRes(url);
-    setSrc(hi || url);
-    setVisible(false);
-  }, [url]);
+    if (!url) { setActiveSrc(''); setLoaded(false); return; }
 
-  const handleError = () => {
-    const original = url;
-    if (src !== original && original) {
-      // hi-res failed — retry with original URL
-      setSrc(original);
-    } else {
-      // both failed — show nothing
-      setSrc('');
-    }
-    setVisible(false);
-  };
+    const hi = _hiRes(url);
+    const firstSrc    = (hi && hi !== url) ? hi : url;
+    const fallbackSrc = (hi && hi !== url) ? url : null;
+
+    setLoaded(false);
+    let cancelled = false;
+
+    const tryLoad = (src, fallback) => {
+      const img = new Image();
+      img.onload  = () => {
+        if (!cancelled) { setActiveSrc(src); setLoaded(true); }
+      };
+      img.onerror = () => {
+        if (!cancelled) {
+          if (fallback) {
+            tryLoad(fallback, null);
+          } else {
+            console.warn('[AlbumArt] both URLs failed:', src);
+            setActiveSrc('');
+            setLoaded(false);
+          }
+        }
+      };
+      img.src = src;
+    };
+
+    tryLoad(firstSrc, fallbackSrc);
+    return () => { cancelled = true; };
+  }, [url]);
 
   return (
     <div style={{
       width: size, height: size, flexShrink: 0,
       background: '#000',
-      boxShadow: visible ? '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset' : 'none',
+      boxShadow: loaded
+        ? '0 30px 90px rgba(0,0,0,.7), 0 0 0 .5px rgba(255,255,255,.04) inset'
+        : 'none',
       overflow: 'hidden',
     }}>
-      {src && (
+      {loaded && activeSrc && (
         <img
-          key={src}
-          src={src}
+          src={activeSrc}
           alt=""
           style={{
             width: '100%', height: '100%',
             objectFit: 'cover', display: 'block',
-            // hidden until loaded — prevents alt-text box and broken-image icon
-            opacity: visible ? 1 : 0,
           }}
-          onLoad={()  => setVisible(true)}
-          onError={handleError}
         />
       )}
     </div>

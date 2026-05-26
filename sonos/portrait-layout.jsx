@@ -80,6 +80,7 @@ function PortraitLayout({
           active={controlsActive} onWake={onWake}
           onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
           onSpeakerClick={onSpeakerClick}
+          speakerOpen={speakerOpen}
           scale={s}
         />
       </div>
@@ -91,7 +92,7 @@ function PortraitLayout({
 function HorizontalControls({
   vinyl, paused, active, onWake,
   onPause, onSkipBack, onSkipForward,
-  onSpeakerClick, scale = 1,
+  onSpeakerClick, speakerOpen = false, scale = 1,
 }) {
   const { useState } = React;
   const [hovered, setHovered] = useState(false);
@@ -104,7 +105,7 @@ function HorizontalControls({
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: vinyl ? 120 * scale : 64 * scale,
-        opacity: (active || hovered) ? 1 : 0.22,
+        opacity: (active || hovered || speakerOpen) ? 1 : 0.22,
         transition: 'opacity .4s cubic-bezier(.3,.7,.4,1)',
       }}
     >
@@ -126,8 +127,8 @@ function HorizontalControls({
         </div>
       )}
 
-      {/* Speaker button — no label text below it */}
-      <ControlButton onClick={onSpeakerClick} label="Speakers" size={44 * scale}>
+      {/* Speaker button — white when panel open */}
+      <ControlButton onClick={onSpeakerClick} label="Speakers" size={44 * scale} active={speakerOpen}>
         <IconSpeaker size={24 * scale} />
       </ControlButton>
     </div>

@@ -11,7 +11,7 @@ function fmt(s) {
 // ─── Landscape right-strip ────────────────────────────────────────────────
 function Controls({ width, vinyl, paused, active, onWake,
                     onPause, onSkipBack, onSkipForward,
-                    onSpeakerClick,
+                    onSpeakerClick, speakerOpen = false,
                     scale = 1 }) {
   const { useState } = React;
   const [hovered, setHovered] = useState(false);
@@ -26,7 +26,7 @@ function Controls({ width, vinyl, paused, active, onWake,
         background: '#000',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center',
-        opacity: (active || hovered) ? 1 : 0.22,
+        opacity: (active || hovered || speakerOpen) ? 1 : 0.22,
         transition: 'opacity .4s cubic-bezier(.3,.7,.4,1)',
       }}
     >
@@ -55,14 +55,14 @@ function Controls({ width, vinyl, paused, active, onWake,
         )}
       </div>
 
-      {/* Bottom — speaker button, no label */}
+      {/* Bottom — speaker button */}
       <div style={{
         flex: 1.4,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'flex-end',
-        paddingBottom: 44 * scale,
+        paddingBottom: 90 * scale,
       }}>
-        <ControlButton onClick={onSpeakerClick} label="Speakers" size={53 * scale}>
+        <ControlButton onClick={onSpeakerClick} label="Speakers" size={53 * scale} active={speakerOpen}>
           <IconSpeaker size={29 * scale} />
         </ControlButton>
       </div>
@@ -72,9 +72,10 @@ function Controls({ width, vinyl, paused, active, onWake,
 
 // ─── ControlButton ────────────────────────────────────────────────────────
 // primary=true  → no border/circle, just the icon (play/pause)
+// active=true   → always white (used for speaker button when panel is open)
 // hover brightens to full white; press scales down with opacity flash
 function ControlButton({ children, onClick, onPointerDown: forwardPD,
-                         size = 44, primary = false, label }) {
+                         size = 44, primary = false, active = false, label }) {
   const { useState } = React;
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -88,7 +89,7 @@ function ControlButton({ children, onClick, onPointerDown: forwardPD,
         width: w, height: w, borderRadius: '50%',
         border: 'none',
         background: hovered && !primary ? 'rgba(255,255,255,0.08)' : 'transparent',
-        color: (hovered || pressed) ? '#fff' : 'rgba(255,255,255,0.75)',
+        color: (hovered || pressed || active) ? '#fff' : 'rgba(255,255,255,0.75)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', padding: 0,
         transform: pressed ? 'scale(0.85)' : 'scale(1)',
@@ -122,18 +123,17 @@ function SpeakerPanel({
   const activeGroup     = rooms.find(g => g.active);
   const activePlayerIds = new Set(activeGroup?.playerIds || []);
 
-  // Always alphabetical — both groups and players
-  const otherGroups = rooms
-    .filter(g => !g.active)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // All groups alphabetically (active + inactive)
+  const allGroups  = [...rooms].sort((a, b) => a.name.localeCompare(b.name));
   const sorted     = [...players].sort((a, b) => a.name.localeCompare(b.name));
   const inGroup    = sorted.filter(p => activePlayerIds.has(p.id));
   const notInGroup = sorted.filter(p => !activePlayerIds.has(p.id));
 
   const LABEL = {
     padding: '10px 18px 6px',
-    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-    fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+    fontFamily: '"Cormorant Garamond", serif',
+    fontStyle: 'italic',
+    fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.35)',
   };
   const HR = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
@@ -156,19 +156,24 @@ function SpeakerPanel({
         animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
       }}
     >
-      {/* Other sources */}
-      {otherGroups.length > 0 && (
+      {/* All groups as radio-style toggles */}
+      {allGroups.length > 0 && (
         <>
           <div style={LABEL}>Sources</div>
-          {otherGroups.map(g => (
-            <SourceRow key={g.id} group={g} onClick={() => { onSwitchGroup?.(g.id); onActivity?.(); }} />
+          {allGroups.map(g => (
+            <GroupRow
+              key={g.id}
+              group={g}
+              isActive={g.active}
+              onSelect={() => { onSwitchGroup?.(g.id); onActivity?.(); }}
+            />
           ))}
           <div style={HR} />
         </>
       )}
 
       {/* Speakers in the active group */}
-      <div style={LABEL}>This group</div>
+      <div style={LABEL}>Speakers</div>
       {inGroup.length === 0
         ? <div style={{ padding: '4px 18px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
             No speakers
@@ -247,7 +252,51 @@ function SpeakerPanel({
   );
 }
 
-// ─── SourceRow ────────────────────────────────────────────────────────────
+// ─── GroupRow — radio-style toggle for all groups ─────────────────────────
+function GroupRow({ group, isActive, onSelect }) {
+  const playing = group.playbackState === 'PLAYBACK_STATE_PLAYING';
+  return (
+    <button
+      onClick={isActive ? undefined : onSelect}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        width: '100%', padding: '8px 18px',
+        background: 'transparent', border: 'none', color: '#fff',
+        cursor: isActive ? 'default' : 'pointer', textAlign: 'left',
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: 13, fontWeight: 500 }}>{group.name}</span>
+        <span style={{
+          fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          color: playing ? 'rgba(62,207,106,0.85)' : 'rgba(255,255,255,0.3)',
+        }}>
+          {playing ? 'playing' : 'paused'}
+        </span>
+      </span>
+      {/* Toggle pill — green ON when active, gray OFF otherwise */}
+      <span style={{
+        display: 'block', flexShrink: 0,
+        width: 34, height: 20, borderRadius: 999,
+        background: isActive ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
+        position: 'relative',
+        transition: 'background .18s',
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: isActive ? 14 : 2,
+          width: 16, height: 16, borderRadius: '50%',
+          background: '#fff', transition: 'left .18s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+        }} />
+      </span>
+    </button>
+  );
+}
+
+// ─── SourceRow — kept for compatibility ──────────────────────────────────
 function SourceRow({ group, onClick }) {
   const playing = group.playbackState === 'PLAYBACK_STATE_PLAYING';
   return (
@@ -388,4 +437,4 @@ function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
 
 function VerticalVolumeSlider({ volume, onChange, scale = 1 }) { return null; }
 
-Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider, SpeakerPanel, SourceRow, SpeakerRow, fmt });
+Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider, SpeakerPanel, SourceRow, GroupRow, SpeakerRow, fmt });
