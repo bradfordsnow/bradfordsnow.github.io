@@ -46,20 +46,19 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
 
   return (
     <div
-      onPointerDown={wake}  // any tap in the controls column wakes playback controls
+      onPointerDown={wake}
       style={{
         width, height: '100%', background: '#000',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}
     >
-      {/* Top spacer */}
-      <div style={{ flex: 1.4 }} />
+      {/* Push group to ~2/3 down */}
+      <div style={{ flex: 2 }} />
 
-      {/* Center — playback */}
+      {/* All 4 icons grouped together */}
       <div style={{
-        flex: 1,
         display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
+        alignItems: 'center',
         gap: 18 * scale,
       }}>
         {!vinyl && (
@@ -84,18 +83,10 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
             </ControlButton>
           </>
         )}
-      </div>
-
-      {/* Bottom — speaker button: completely independent, never dims with playback */}
-      <div style={{
-        flex: 1.4,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'flex-end',
-        paddingBottom: 90 * scale,
-      }}>
+        {/* Speaker — independent, never wakes playback controls */}
         <button
           onClick={onSpeakerClick}
-          onPointerDown={(e) => e.stopPropagation()} // don't wake playback controls
+          onPointerDown={(e) => e.stopPropagation()}
           aria-label="Speakers"
           style={{
             width: 53 * scale, height: 53 * scale,
@@ -110,6 +101,9 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           <IconSpeaker size={29 * scale} />
         </button>
       </div>
+
+      {/* Bottom spacer */}
+      <div style={{ flex: 1 }} />
     </div>
   );
 }

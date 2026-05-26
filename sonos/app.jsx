@@ -629,11 +629,11 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
   return (
     <div style={{
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-      fontSize: 24 * scale, fontWeight: 500,
+      fontSize: 18 * scale, fontWeight: 500,
       color: 'rgba(255,255,255,0.22)',
       letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
     }}>
-      -{m}:{String(s).padStart(2, '0')}
+      {m}:{String(s).padStart(2, '0')}
     </div>
   );
 }

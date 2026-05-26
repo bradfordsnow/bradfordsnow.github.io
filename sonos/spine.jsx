@@ -13,9 +13,22 @@
 // All font sizes are 20% larger than the original design.
 
 function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
+  const { useRef, useEffect, useState } = React;
   const baseWidth = lines === 3 ? 187 : 77;
+  const containerRef = useRef(null);
+  const [availH, setAvailH] = useState(1024);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setAvailH(el.offsetHeight);
+    const ro = new ResizeObserver(() => setAvailH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       width: baseWidth * scale, flexShrink: 0,
       height: '100%',
       background: '#000', color: '#fff',
@@ -29,8 +42,8 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
         transformOrigin: 'center center',
       }}>
         {lines === 3
-          ? <SpineThreeLines scale={scale} track={track} />
-          : <SpineOneLine scale={scale} track={track} />}
+          ? <SpineThreeLines scale={scale} track={track} maxW={availH} />
+          : <SpineOneLine scale={scale} track={track} maxW={availH} />}
       </div>
 
       {shazam && <ShazamMark scale={scale} />}
@@ -38,7 +51,9 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
   );
 }
 
-function SpineOneLine({ scale, track = {} }) {
+function SpineOneLine({ scale, track = {}, maxW = 0 }) {
+  // Reserve space for artist + album + year + three gaps; cap song at the remainder
+  const songMaxW = maxW > 0 ? Math.max(80, maxW - Math.round(300 * scale)) : undefined;
   return (
     <div style={{
       display: 'flex', flexDirection: 'row', alignItems: 'baseline',
@@ -46,14 +61,16 @@ function SpineOneLine({ scale, track = {} }) {
       lineHeight: 1,
     }}>
       <Artist size={16 * scale} name={track.artist} />
-      <Song   size={48 * scale} name={track.song} />
+      <Song   size={48 * scale} name={track.song} maxWidth={songMaxW} />
       <Album  size={24 * scale} name={track.album} />
       {track.year && <Year size={12 * scale} name={track.year} />}
     </div>
   );
 }
 
-function SpineThreeLines({ scale, track = {} }) {
+function SpineThreeLines({ scale, track = {}, maxW = 0 }) {
+  // Reserve space for artist row + album row + two gaps; cap song at the remainder
+  const songMaxW = maxW > 0 ? Math.max(80, maxW - Math.round(110 * scale)) : undefined;
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
@@ -61,7 +78,7 @@ function SpineThreeLines({ scale, track = {} }) {
       lineHeight: 1, whiteSpace: 'nowrap',
     }}>
       <Artist size={22 * scale} name={track.artist} />
-      <Song   size={74 * scale} name={track.song} />
+      <Song   size={74 * scale} name={track.song} maxWidth={songMaxW} />
       <AlbumYear scale={scale} track={track} />
     </div>
   );
@@ -81,13 +98,20 @@ function Artist({ size, name }) {
     }}>{name || ARTIST_FALLBACK}</span>
   );
 }
-function Song({ size, name }) {
+function Song({ size, name, maxWidth }) {
   if (!name) return null;
   return (
     <span style={{
       fontFamily: '"Cormorant Garamond", serif',
       fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
       color: '#fff',
+      ...(maxWidth != null ? {
+        display: 'inline-block',
+        maxWidth,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      } : {}),
     }}>{name}</span>
   );
 }
