@@ -159,27 +159,32 @@ const SonosAPI = {
   setVolume(groupId, volume)     { return this._post(`/groups/${groupId}/playback/volume`, { volume }); },
   setPlayerVolume(playerId, vol) { return this._post(`/players/${playerId}/playerVolume`, { volume: vol }); },
 
-  // ── Compound fetch — returns everything the UI needs in one shot ───────
+  // ── Group membership ───────────────────────────────────────────────────
+  modifyGroupMembers(groupId, playerIdsToAdd = [], playerIdsToRemove = []) {
+    return this._post(`/groups/${groupId}/groups/modifyGroupMembers`,
+      { playerIdsToAdd, playerIdsToRemove });
+  },
 
-  async fetchState(householdId) {
-    // Groups gives us rooms + active group
+  // ── Compound fetch — returns everything the UI needs in one shot ───────
+  // preferredGroupId: keep showing this group even if something else is playing
+  async fetchState(householdId, preferredGroupId = null) {
     const { groups, players } = await this.getGroups(householdId);
 
-    // Pick the first playing group, fall back to first group
-    const active = groups.find(g => g.playbackState === 'PLAYBACK_STATE_PLAYING')
-                || groups.find(g => g.playbackState === 'PLAYBACK_STATE_PAUSED')
-                || groups[0];
+    const active =
+      (preferredGroupId && groups.find(g => g.id === preferredGroupId)) ||
+      groups.find(g => g.playbackState === 'PLAYBACK_STATE_PLAYING')    ||
+      groups.find(g => g.playbackState === 'PLAYBACK_STATE_PAUSED')     ||
+      groups[0];
 
-    if (!active) return { groups: [], active: null, playback: null, meta: null, vol: null };
+    if (!active) return { groups: [], players: players || [], active: null, playback: null, meta: null, vol: null };
 
-    // Parallel fetch
     const [playback, meta, vol] = await Promise.all([
       this.getPlayback(active.id).catch(() => null),
       this.getPlaybackMetadata(active.id).catch(() => null),
       this.getVolume(active.id).catch(() => null),
     ]);
 
-    return { groups, players, active, playback, meta, vol };
+    return { groups, players: players || [], active, playback, meta, vol };
   },
 };
 

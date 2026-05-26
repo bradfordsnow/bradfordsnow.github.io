@@ -237,13 +237,32 @@ function VerticalVolumeSlider({ volume, onChange, scale = 1 }) {
   );
 }
 
-// ─── Speaker / room selector ───────────────────────────────────────────────
-function SpeakerPanel({ rooms, onToggle, anchorRight, anchorBottom }) {
+// ─── Speaker / group panel ─────────────────────────────────────────────────
+// Two sections:
+//   Sources  — other groups currently playing/paused, tap to switch focus
+//   Speakers — players in/out of the active group, toggle to add or remove
+function SpeakerPanel({ rooms = [], players = [], activeGroupId,
+                        onSwitchGroup, onAddPlayer, onRemovePlayer,
+                        anchorRight, anchorBottom }) {
+  const activeGroup     = rooms.find(g => g.active);
+  const activePlayerIds = new Set(activeGroup?.playerIds || []);
+  const otherGroups     = rooms.filter(g => !g.active);
+  const inGroup         = players.filter(p => activePlayerIds.has(p.id));
+  const notInGroup      = players.filter(p => !activePlayerIds.has(p.id));
+
+  const PANEL_LABEL = {
+    padding: '10px 18px 6px',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.35)',
+  };
+  const DIVIDER = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
+
   return (
     <div style={{
       position: 'absolute', bottom: anchorBottom, right: anchorRight,
-      width: 300, padding: '16px 0 10px',
-      background: 'rgba(10,10,12,0.78)',
+      width: 280, paddingBottom: 6,
+      background: 'rgba(10,10,12,0.88)',
       backdropFilter: 'blur(40px) saturate(160%)',
       WebkitBackdropFilter: 'blur(40px) saturate(160%)',
       border: '0.5px solid rgba(255,255,255,0.14)',
@@ -252,55 +271,90 @@ function SpeakerPanel({ rooms, onToggle, anchorRight, anchorBottom }) {
       color: '#fff', zIndex: 20,
       animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
     }}>
-      <div style={{
-        padding: '0 18px 12px',
-        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-        fontSize: 10, letterSpacing: '0.28em', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.5)',
-        borderBottom: '0.5px solid rgba(255,255,255,0.08)',
-      }}>
-        Speakers
-      </div>
-      <div style={{ padding: '8px 0' }}>
-        {rooms.map((room) => (
-          <button key={room.id} onClick={() => onToggle(room.id)} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '10px 18px',
-            background: 'transparent', border: 'none', color: '#fff',
-            cursor: 'pointer', textAlign: 'left',
-            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-            fontSize: 13.5, fontWeight: 500,
-            WebkitTapHighlightColor: 'transparent',
-          }}>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ color: room.on ? '#fff' : 'rgba(255,255,255,0.62)' }}>
-                {room.name}
-              </span>
-              <span style={{
-                fontSize: 10, letterSpacing: '0.08em',
-                color: 'rgba(255,255,255,0.32)',
-                fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-              }}>
-                {room.deviceCount} {room.deviceCount === 1 ? 'speaker' : 'speakers'}
-              </span>
-            </span>
-            <span style={{
-              width: 36, height: 22, borderRadius: 999,
-              background: room.on ? '#3ecf6a' : 'rgba(255,255,255,0.18)',
-              position: 'relative', transition: 'background .18s',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                position: 'absolute', top: 2, left: room.on ? 16 : 2,
-                width: 18, height: 18, borderRadius: '50%',
-                background: '#fff', transition: 'left .18s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-              }} />
-            </span>
-          </button>
-        ))}
-      </div>
+
+      {/* Other sources — tap to switch */}
+      {otherGroups.length > 0 && (
+        <>
+          <div style={PANEL_LABEL}>Sources</div>
+          {otherGroups.map(g => <SourceRow key={g.id} group={g} onClick={() => onSwitchGroup?.(g.id)} />)}
+          <div style={DIVIDER} />
+        </>
+      )}
+
+      {/* Players in the active group */}
+      <div style={PANEL_LABEL}>This group</div>
+      {inGroup.length === 0
+        ? <div style={{ padding: '4px 18px 6px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>No speakers</div>
+        : inGroup.map(p => <SpeakerRow key={p.id} player={p} inGroup onToggle={() => onRemovePlayer?.(p.id)} />)
+      }
+
+      {/* Available speakers to add */}
+      {notInGroup.length > 0 && (
+        <>
+          <div style={DIVIDER} />
+          <div style={PANEL_LABEL}>Add speakers</div>
+          {notInGroup.map(p => <SpeakerRow key={p.id} player={p} inGroup={false} onToggle={() => onAddPlayer?.(p.id)} />)}
+        </>
+      )}
     </div>
+  );
+}
+
+function SourceRow({ group, onClick }) {
+  const playing = group.playbackState === 'PLAYBACK_STATE_PLAYING';
+  return (
+    <button onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      width: '100%', padding: '8px 18px',
+      background: 'transparent', border: 'none', color: '#fff',
+      cursor: 'pointer', textAlign: 'left',
+      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      WebkitTapHighlightColor: 'transparent',
+    }}>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: 13, fontWeight: 500 }}>{group.name}</span>
+        <span style={{
+          fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          color: playing ? 'rgba(62,207,106,0.85)' : 'rgba(255,255,255,0.3)',
+        }}>
+          {playing ? '▶ playing' : '⏸ paused'}
+        </span>
+      </span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+  );
+}
+
+function SpeakerRow({ player, inGroup, onToggle }) {
+  return (
+    <button onClick={onToggle} style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      width: '100%', padding: '8px 18px',
+      background: 'transparent', border: 'none', color: '#fff',
+      cursor: 'pointer', textAlign: 'left',
+      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      WebkitTapHighlightColor: 'transparent',
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 500, color: inGroup ? '#fff' : 'rgba(255,255,255,0.45)' }}>
+        {player.name}
+      </span>
+      <span style={{
+        width: 34, height: 20, borderRadius: 999, flexShrink: 0,
+        background: inGroup ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
+        position: 'relative', transition: 'background .18s',
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: inGroup ? 14 : 2,
+          width: 16, height: 16, borderRadius: '50%',
+          background: '#fff', transition: 'left .18s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+        }} />
+      </span>
+    </button>
   );
 }
 
@@ -355,4 +409,4 @@ function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
   );
 }
 
-Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider, SpeakerPanel, fmt });
+Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider, SpeakerPanel, SourceRow, SpeakerRow, fmt });

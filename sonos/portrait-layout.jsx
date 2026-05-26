@@ -7,10 +7,12 @@
 
 function PortraitLayout({
   width, height, vinyl, paused, shazam,
-  volume, volumeOpen, speakerOpen, rooms, roomsActive,
+  volume, volumeOpen, speakerOpen,
+  rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onVolumeClick, onSpeakerClick, onVolumeChange, onToggleRoom,
+  onVolumeClick, onSpeakerClick, onVolumeChange,
+  onSwitchGroup, onAddPlayer, onRemovePlayer,
   compact = false, lines = 3, track = {},
 }) {
   const s = compact ? 0.5 : 1;
@@ -56,8 +58,10 @@ function PortraitLayout({
                        anchorTop={20 * s} anchorRight={20 * s} />
         )}
         {speakerOpen && (
-          <SpeakerPanel rooms={rooms} onToggle={onToggleRoom}
-                        anchorBottom={20 * s} anchorRight={20 * s} />
+          <SpeakerPanel
+            rooms={rooms} players={players} activeGroupId={activeGroupId}
+            onSwitchGroup={onSwitchGroup} onAddPlayer={onAddPlayer} onRemovePlayer={onRemovePlayer}
+            anchorBottom={20 * s} anchorRight={20 * s} />
         )}
       </div>
 
@@ -89,6 +93,8 @@ function HorizontalControls({
   vinyl, paused, active, onWake,
   onPause, onSkipBack, onSkipForward,
   volume, onVolumeClick, onSpeakerClick, roomsActive, scale = 1,
+  // new props accepted but not passed deeper (SpeakerPanel lives in PortraitLayout)
+  rooms, players, activeGroupId, onSwitchGroup, onAddPlayer, onRemovePlayer,
 }) {
   const VolumeIcon = volume < 33 ? IconVolumeLow : volume > 66 ? IconVolumeHigh : IconVolume;
   return (

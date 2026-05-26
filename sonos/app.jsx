@@ -36,70 +36,75 @@ function useSonos() {
     loading:       true,
     error:         null,
     householdId:   null,
-    groups:        [],
+    groups:        [],   // all groups: { id, name, playerIds, playbackState, active }
+    players:       [],   // all individual players: { id, name }
     activeGroupId: null,
     playing:       false,
-    track:         null,   // { artist, song, album, year, artworkUrl, durationSecs }
+    track:         null,
     positionSecs:  0,
     volume:        40,
     vinyl:         false,
   });
 
-  const householdRef = useRef(null);
-  const volumeDebounce = useRef(null);
+  const householdRef    = useRef(null);
+  const selectedGroupRef = useRef(null);  // locked group — survives pause/stop
+  const volumeDebounce  = useRef(null);
 
   const poll = useCallback(async () => {
     try {
-      // Fetch household once, cache it
       if (!householdRef.current) {
         const { households } = await SonosAPI.getHouseholds();
         householdRef.current = households?.[0]?.id;
       }
       if (!householdRef.current) return;
 
-      const { groups, active, playback, meta, vol } =
-        await SonosAPI.fetchState(householdRef.current);
+      const { groups, players, active, playback, meta, vol } =
+        await SonosAPI.fetchState(householdRef.current, selectedGroupRef.current);
+
+      // Lock in selection on first load
+      if (!selectedGroupRef.current && active) selectedGroupRef.current = active.id;
 
       if (!active) {
-        setData(d => ({ ...d, loading: false, groups: [], playing: false }));
+        setData(d => ({ ...d, loading: false, groups: [], players: [], playing: false }));
         return;
       }
 
-      const playing = playback?.playbackState === 'PLAYBACK_STATE_PLAYING';
+      const playing  = playback?.playbackState === 'PLAYBACK_STATE_PLAYING';
       const posSecs  = (playback?.positionMillis || 0) / 1000;
 
-      // Extract track from metadata (handles streaming + radio differently)
-      const item    = meta?.currentItem;
+      const item     = meta?.currentItem;
       const rawTrack = item?.track;
       let track = null;
 
       if (rawTrack?.name) {
         track = {
-          artist:     rawTrack.artist?.name || meta?.container?.name || '',
-          song:       rawTrack.name,
-          album:      rawTrack.album?.name || '',
-          year:       '',
-          artworkUrl: hiResArt(rawTrack.imageUrl || meta?.container?.imageUrl),
-          durationSecs: (rawTrack.durationMillis || 0) / 1000,
+          artist:      rawTrack.artist?.name || meta?.container?.name || '',
+          song:        rawTrack.name,
+          album:       rawTrack.album?.name || '',
+          year:        '',
+          artworkUrl:  hiResArt(rawTrack.imageUrl || meta?.container?.imageUrl),
+          durationSecs:(rawTrack.durationMillis || 0) / 1000,
         };
       } else if (meta?.container?.name) {
-        // Radio / line-in — show station as artist
         track = {
-          artist:     meta.container.name,
-          song:       meta.streamInfo || '',
-          album:      '',
-          year:       '',
-          artworkUrl: hiResArt(meta.container.imageUrl),
-          durationSecs: 0,
+          artist:      meta.container.name,
+          song:        meta.streamInfo || '',
+          album:       '',
+          year:        '',
+          artworkUrl:  hiResArt(meta.container.imageUrl),
+          durationSecs:0,
         };
       }
 
       const mappedGroups = groups.map(g => ({
-        id:          g.id,
-        name:        g.name,
-        deviceCount: g.playerIds?.length || 1,
-        on:          g.id === active.id,
+        id:            g.id,
+        name:          g.name,
+        playerIds:     g.playerIds || [],
+        playbackState: g.playbackState,
+        active:        g.id === active.id,
       }));
+
+      const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
       setData(d => ({
         ...d,
@@ -107,13 +112,12 @@ function useSonos() {
         error:         null,
         householdId:   householdRef.current,
         groups:        mappedGroups,
+        players:       mappedPlayers,
         activeGroupId: active.id,
         playing,
         track,
         positionSecs:  posSecs,
         volume:        vol?.volume ?? d.volume,
-        // Vinyl only when actively playing with no track info (line-in / unknown source)
-        // If not playing and no track → black, not vinyl
         vinyl:         playing && !track,
       }));
     } catch (err) {
@@ -128,7 +132,6 @@ function useSonos() {
     return () => clearInterval(id);
   }, [poll]);
 
-  // Actions — optimistic local update, then API call
   const actions = {
     togglePlay: () => {
       setData(d => {
@@ -155,12 +158,23 @@ function useSonos() {
         });
       }, 400);
     },
-    toggleRoom: (id) => {
-      // Visual toggle — full group management is a v2 feature
-      setData(d => ({
-        ...d,
-        groups: d.groups.map(g => g.id === id ? { ...g, on: !g.on } : g),
-      }));
+    // Switch which group the UI is showing + controlling
+    switchGroup: (groupId) => {
+      selectedGroupRef.current = groupId;
+      poll();
+    },
+    // Add/remove individual players from the active group
+    addToGroup: (playerId) => {
+      setData(d => {
+        if (d.activeGroupId) SonosAPI.modifyGroupMembers(d.activeGroupId, [playerId], []);
+        return d;
+      });
+    },
+    removeFromGroup: (playerId) => {
+      setData(d => {
+        if (d.activeGroupId) SonosAPI.modifyGroupMembers(d.activeGroupId, [], [playerId]);
+        return d;
+      });
     },
   };
 
@@ -363,7 +377,8 @@ function App() {
   // Effective vinyl mode: API says nothing playing → show vinyl
   const vinyl = t.vinyl || data.vinyl;
 
-  const roomsActive = data.groups.filter(r => r.on).length;
+  const activeGroup  = data.groups.find(g => g.active);
+  const roomsActive  = activeGroup?.playerIds?.length || 0;
 
   const effectiveOrientation = t.device === 'tv' ? 'landscape' : t.orientation;
   const { w: fw, h: fh } = frameSize(t.device, effectiveOrientation);
@@ -390,16 +405,20 @@ function App() {
   const layoutProps = {
     vinyl, paused: !data.playing, shazam: t.shazam,
     volume: data.volume, volumeOpen, speakerOpen,
-    rooms: data.groups, roomsActive,
+    rooms: data.groups, players: data.players, roomsActive,
+    activeGroupId: data.activeGroupId,
     controlsActive, onWake: wakeControls,
     track: data.track || {},
     positionSecs: data.positionSecs,
-    onPause:        () => { actions.togglePlay(); wakeControls(); },
-    onSkipBack:     () => { actions.skipPrev();   wakeControls(); },
-    onSkipForward:  () => { actions.skipNext();   wakeControls(); },
-    onVolumeClick:  () => { onVolumeClick(); wakeControls(); },
-    onSpeakerClick: () => { onSpeakerClick(); wakeControls(); },
-    onVolumeChange, onToggleRoom,
+    onPause:         () => { actions.togglePlay(); wakeControls(); },
+    onSkipBack:      () => { actions.skipPrev();   wakeControls(); },
+    onSkipForward:   () => { actions.skipNext();   wakeControls(); },
+    onVolumeClick:   () => { onVolumeClick(); wakeControls(); },
+    onSpeakerClick:  () => { onSpeakerClick(); wakeControls(); },
+    onVolumeChange,
+    onSwitchGroup:   (id) => { actions.switchGroup(id);    wakeControls(); },
+    onAddPlayer:     (id) => { actions.addToGroup(id);     wakeControls(); },
+    onRemovePlayer:  (id) => { actions.removeFromGroup(id); wakeControls(); },
     typeScale, lines: t.spineLines,
   };
 
@@ -570,10 +589,12 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
 // ─── Landscape layout ─────────────────────────────────────────────────────
 function LandscapeLayout({
   width, height, vinyl, paused, shazam,
-  volume, volumeOpen, speakerOpen, rooms, roomsActive,
+  volume, volumeOpen, speakerOpen,
+  rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onVolumeClick, onSpeakerClick, onVolumeChange, onToggleRoom,
+  onVolumeClick, onSpeakerClick, onVolumeChange,
+  onSwitchGroup, onAddPlayer, onRemovePlayer,
   typeScale = 1, lines = 1, track = {},
   positionSecs = 0,
 }) {
@@ -610,8 +631,10 @@ function LandscapeLayout({
                        anchorTop={200 * typeScale} anchorRight={20 * typeScale} />
         )}
         {speakerOpen && (
-          <SpeakerPanel rooms={rooms} onToggle={onToggleRoom}
-                        anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
+          <SpeakerPanel
+            rooms={rooms} players={players} activeGroupId={activeGroupId}
+            onSwitchGroup={onSwitchGroup} onAddPlayer={onAddPlayer} onRemovePlayer={onRemovePlayer}
+            anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
         )}
       </div>
 
