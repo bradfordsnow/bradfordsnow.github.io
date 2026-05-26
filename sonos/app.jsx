@@ -26,8 +26,11 @@ function _resolveCdnUrl(url) {
   try {
     const u = new URL(url).searchParams.get('u');
     if (!u) return null;
-    const decoded = decodeURIComponent(u)
+    let decoded = decodeURIComponent(u)
       .replace(/^x-sonos-https?:\/\//i, 'https://');
+    // Some Sonos versions encode plain http:// CDN URLs — upgrade them
+    if (decoded.startsWith('http://') && !_isLocalUrl(decoded))
+      decoded = 'https://' + decoded.slice(7);
     if (decoded.startsWith('https://') && !_isLocalUrl(decoded)) return decoded;
   } catch {}
   return null;

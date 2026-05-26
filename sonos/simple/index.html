@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Sonos Art</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+  body { -webkit-font-smoothing: antialiased; font-family: system-ui, -apple-system, sans-serif; }
+
+  #root { width: 100%; height: 100%; }
+
+  .art-screen {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .art-screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .auth-screen {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .auth-screen p {
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-align: center;
+    padding: 0 32px;
+  }
+
+  .auth-screen a {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 14px 32px;
+    border-radius: 4px;
+  }
+
+  .error-text {
+    color: rgba(255,255,255,0.4);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    position: fixed;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="../sonos-config.js"></script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="../sonos-api.jsx"></script>
+
+<script type="text/babel">
+// ─── URL helpers (no ResizeObserver anywhere in this file) ─────────────────
+
+function _isLocalUrl(url) {
+  return Boolean(url && /^http:\/\/(127\.|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(url));
+}
+
+function _resolveCdnUrl(url) {
+  if (!url) return null;
+  if (!_isLocalUrl(url)) return url;
+  try {
+    var u = new URL(url).searchParams.get('u');
+    if (!u) return null;
+    var decoded = decodeURIComponent(u).replace(/^x-sonos-https?:\/\//i, 'https://');
+    if (decoded.startsWith('http://') && !_isLocalUrl(decoded))
+      decoded = 'https://' + decoded.slice(7);
+    if (decoded.startsWith('https://') && !_isLocalUrl(decoded)) return decoded;
+  } catch(e) {}
+  return null;
+}
+
+function _hiRes(url) {
+  if (!url) return url;
+  return url
+    .replace(/size=x\d+_y\d+/gi, 'size=x1000_y1000')
+    .replace(/\/\d+x\d+(bb)?\.(jpg|png|webp)/gi, function(m, bb, ext) { return '/1000x1000' + (bb || '') + '.' + ext; })
+    .replace(/_\d+x\d+(bb)?\.(jpg|png|webp)/gi, function(m, bb, ext) { return '_1000x1000' + (bb || '') + '.' + ext; });
+}
+
+function _bestArtUrl(meta, rawTrack, item) {
+  var candidates = [
+    rawTrack && rawTrack.imageUrl,
+    item && item.imageUrl,
+    meta && meta.container && meta.container.imageUrl,
+  ].map(_resolveCdnUrl);
+  var url = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i]) { url = candidates[i]; break; }
+  }
+  return url ? _hiRes(url) : '';
+}
+
+// ─── Main app ──────────────────────────────────────────────────────────────
+
+var { useState, useEffect, useRef, useCallback } = React;
+
+function SimpleApp() {
+  // Check for OAuth callback first
+  var params = new URLSearchParams(window.location.search);
+  var code  = params.get('code');
+  var state = params.get('state');
+
+  if (code && state) {
+    return React.createElement(OAuthCallback, { code: code, state: state });
+  }
+
+  if (!SonosAPI.isConfigured() || !SonosAPI.isAuthenticated()) {
+    return React.createElement(AuthScreen, null);
+  }
+
+  return React.createElement(ArtScreen, null);
+}
+
+function OAuthCallback({ code, state }) {
+  var [msg, setMsg] = useState('Connecting...');
+
+  useEffect(function() {
+    SonosAPI.exchangeCode(code, state)
+      .then(function() {
+        window.location.replace(window.location.pathname);
+      })
+      .catch(function(err) {
+        setMsg('Auth failed: ' + err.message);
+      });
+  }, []);
+
+  return React.createElement('div', { className: 'auth-screen' },
+    React.createElement('p', null, msg)
+  );
+}
+
+function AuthScreen() {
+  var authUrl = SonosAPI.isConfigured() ? SonosAPI.getAuthUrl() : '#';
+  return React.createElement('div', { className: 'auth-screen' },
+    React.createElement('p', null, 'Connect to Sonos to display album art'),
+    React.createElement('a', { href: authUrl }, 'Sign In')
+  );
+}
+
+function ArtScreen() {
+  var [artUrl, setArtUrl]   = useState('');
+  var [imgSrc, setImgSrc]   = useState('');
+  var [error, setError]     = useState(null);
+  var householdRef          = useRef(null);
+  var selectedGroupRef      = useRef(null);
+
+  var poll = useCallback(function() {
+    var hid;
+    (householdRef.current
+      ? Promise.resolve({ households: [{ id: householdRef.current }] })
+      : SonosAPI.getHouseholds()
+    ).then(function(res) {
+      hid = res.households && res.households[0] && res.households[0].id;
+      householdRef.current = hid;
+      if (!hid) return Promise.reject(new Error('No household'));
+      return SonosAPI.fetchState(hid, selectedGroupRef.current);
+    }).then(function(s) {
+      if (!s) return;
+      if (!selectedGroupRef.current && s.active) selectedGroupRef.current = s.active.id;
+      var item     = s.meta && s.meta.currentItem;
+      var rawTrack = item && item.track;
+      var url      = _bestArtUrl(s.meta, rawTrack, item);
+      setArtUrl(url || '');
+      setError(null);
+    }).catch(function(err) {
+      setError(err.message);
+    });
+  }, []);
+
+  useEffect(function() {
+    poll();
+    var id = setInterval(poll, 4000);
+    return function() { clearInterval(id); };
+  }, [poll]);
+
+  // Update displayed image only when URL actually changes
+  useEffect(function() {
+    if (artUrl) setImgSrc(artUrl);
+  }, [artUrl]);
+
+  var handleError = function() {
+    // Try original (non-hi-res) URL if hi-res failed
+    if (artUrl && imgSrc !== artUrl) {
+      setImgSrc(artUrl);
+    } else {
+      setImgSrc('');
+    }
+  };
+
+  return React.createElement('div', { className: 'art-screen' },
+    imgSrc
+      ? React.createElement('img', {
+          key: imgSrc,
+          src: imgSrc,
+          alt: '',
+          onError: handleError,
+        })
+      : null,
+    error
+      ? React.createElement('div', { className: 'error-text' }, error)
+      : null
+  );
+}
+
+// ─── Mount ─────────────────────────────────────────────────────────────────
+ReactDOM.createRoot(document.getElementById('root')).render(
+  React.createElement(SimpleApp, null)
+);
+</script>
+</body>
+</html>
