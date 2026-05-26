@@ -1,8 +1,5 @@
-// controls.jsx — Right control strip + vertical volume slider.
-//
-// Volume fires on pointerDown (not click) so it opens immediately on first touch.
-// The vertical volume slider lives in the right column of the layout (see app.jsx),
-// spanning from the skip-back button down to just above the time remaining display.
+// controls.jsx — Right control strip (playback + speaker button).
+// Volume is now entirely inside SpeakerPanel: per-speaker sliders + master footer.
 
 function fmt(s) {
   s = Math.max(0, Math.floor(s));
@@ -11,16 +8,15 @@ function fmt(s) {
   return `${m}:${String(r).padStart(2, '0')}`;
 }
 
+// ─── Landscape right-strip ────────────────────────────────────────────────
+// Three vertical zones: spacer (clock sits above, absolutely) · playback · speaker
 function Controls({ width, vinyl, paused, active, onWake,
                     onPause, onSkipBack, onSkipForward,
-                    volume, onVolumeClick, volumeOpen,
-                    onSpeakerClick, speakerOpen, roomsActive,
+                    onSpeakerClick, roomsActive,
                     scale = 1 }) {
-  const VolumeIcon = volume < 33 ? IconVolumeLow : volume > 66 ? IconVolumeHigh : IconVolume;
-
   return (
     <div onPointerDown={onWake} style={{
-      width, height: '100%', position: 'relative',
+      width, height: '100%',
       background: '#000',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center',
@@ -28,34 +24,10 @@ function Controls({ width, vinyl, paused, active, onWake,
       transition: 'opacity .9s cubic-bezier(.3,.7,.4,1)',
     }}>
 
-      {/* Top third — Volume, biased ~20% toward center */}
-      <div style={{
-        flex: 1,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'flex-end',
-        paddingBottom: 80 * scale,
-        gap: 8 * scale,
-      }}>
-        {/* Fire on pointerDown so first touch opens immediately, stopPropagation
-            prevents the parent onPointerDown (onWake) from double-calling */}
-        <ControlButton
-          label="Volume"
-          size={53 * scale}
-          onPointerDown={(e) => { e.stopPropagation(); onVolumeClick(); onWake(); }}
-        >
-          <VolumeIcon size={31 * scale} />
-        </ControlButton>
-        <div style={{
-          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontSize: 9 * scale, letterSpacing: '0.18em',
-          color: 'rgba(255,255,255,0.5)',
-          fontVariantNumeric: 'tabular-nums',
-        }}>
-          {String(volume).padStart(2, '0')}
-        </div>
-      </div>
+      {/* Top spacer — clock lives here via absolute positioning in parent */}
+      <div style={{ flex: 1.4 }} />
 
-      {/* Middle — Playback */}
+      {/* Center — playback buttons */}
       <div style={{
         flex: 1,
         display: 'flex', flexDirection: 'column',
@@ -77,12 +49,12 @@ function Controls({ width, vinyl, paused, active, onWake,
         )}
       </div>
 
-      {/* Bottom third — Speakers, biased ~20% toward center */}
+      {/* Bottom — speaker button, pulled toward bottom edge */}
       <div style={{
-        flex: 1,
+        flex: 1.4,
         display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'flex-start',
-        paddingTop: 80 * scale,
+        alignItems: 'center', justifyContent: 'flex-end',
+        paddingBottom: 44 * scale,
         gap: 8 * scale,
       }}>
         <ControlButton onClick={onSpeakerClick} label="Speakers" size={53 * scale}>
@@ -101,8 +73,7 @@ function Controls({ width, vinyl, paused, active, onWake,
   );
 }
 
-// ControlButton — fires scale animation on pointer events (works on touch + mouse).
-// Accepts an optional onPointerDown for immediate-fire actions (volume button).
+// ─── ControlButton ────────────────────────────────────────────────────────
 function ControlButton({ children, onClick, onPointerDown: forwardPD,
                          size = 44, primary = false, label, accent = false }) {
   const w = primary ? size * 1.4 : size;
@@ -132,137 +103,42 @@ function ControlButton({ children, onClick, onPointerDown: forwardPD,
   );
 }
 
-// ─── Vertical volume slider ────────────────────────────────────────────────
-// Positioned absolutely in the right column (app.jsx), spanning from just
-// above the skip-back button down to just above the time remaining display.
-// Uses pointer capture so dragging works anywhere on the track.
-function VerticalVolumeSlider({ volume, onChange, scale = 1 }) {
-  const { useRef } = React;
-  const trackRef = useRef(null);
-
-  const calc = (e) => {
-    const rect = trackRef.current.getBoundingClientRect();
-    const y = (e.clientY - rect.top) / rect.height;
-    // top = 100, bottom = 0
-    onChange(Math.round(Math.max(0, Math.min(1, 1 - y)) * 100));
-  };
-
-  const VolumeIcon = volume < 33 ? IconVolumeLow : volume > 66 ? IconVolumeHigh : IconVolume;
-
-  return (
-    <div style={{
-      position: 'absolute',
-      // Align with skip-back button (~38% down) → time remaining (~bottom 56px)
-      top: '38%',
-      bottom: 56 * scale,
-      left: 0, right: 0,
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center',
-      zIndex: 20,
-      animation: 'panelIn .18s cubic-bezier(.2,.7,.3,1)',
-    }}>
-
-      {/* Value label at top */}
-      <div style={{
-        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-        fontSize: 10 * scale, letterSpacing: '0.18em',
-        color: 'rgba(255,255,255,0.45)',
-        marginBottom: 10 * scale,
-        fontVariantNumeric: 'tabular-nums',
-      }}>
-        {String(volume).padStart(2, '0')}
-      </div>
-
-      {/* Interactive track area */}
-      <div
-        ref={trackRef}
-        style={{
-          flex: 1,
-          width: 48 * scale, // wide hit area
-          position: 'relative',
-          display: 'flex', justifyContent: 'center',
-          cursor: 'ns-resize',
-          touchAction: 'none', // prevent scroll interference on iPad
-        }}
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          calc(e);
-        }}
-        onPointerMove={(e) => { if (e.buttons) calc(e); }}
-      >
-        {/* Track line */}
-        <div style={{
-          position: 'absolute',
-          top: 0, bottom: 0,
-          width: 2 * scale,
-          background: 'rgba(255,255,255,0.12)',
-          borderRadius: 999,
-        }}>
-          {/* Fill */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            height: `${volume}%`,
-            background: 'rgba(255,255,255,0.75)',
-            borderRadius: 999,
-          }} />
-          {/* Thumb */}
-          <div style={{
-            position: 'absolute',
-            bottom: `${volume}%`,
-            left: '50%',
-            transform: 'translate(-50%, 50%)',
-            width: 13 * scale, height: 13 * scale,
-            borderRadius: '50%',
-            background: '#fff',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
-          }} />
-        </div>
-
-        {/* Volume icon — vertically centered on the track */}
-        <div style={{
-          position: 'absolute',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: '#000',
-          borderRadius: '50%',
-          width: 30 * scale, height: 30 * scale,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-        }}>
-          <VolumeIcon size={18 * scale} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Speaker / group panel ─────────────────────────────────────────────────
-// Two sections:
-//   Sources  — other groups currently playing/paused, tap to switch focus
-//   Speakers — players in/out of the active group, toggle to add or remove
-function SpeakerPanel({ rooms = [], players = [], activeGroupId,
-                        onSwitchGroup, onAddPlayer, onRemovePlayer,
-                        anchorRight, anchorBottom }) {
+// Sections:
+//   Sources      — other groups currently playing/paused, tap to switch focus
+//   This group   — players in the active group: name · toggle · per-speaker volume
+//   Add speakers — players not in the active group
+//   Master       — group-wide volume slider pinned to the bottom
+function SpeakerPanel({
+  rooms = [], players = [], activeGroupId,
+  onSwitchGroup, onAddPlayer, onRemovePlayer,
+  playerVolumes = {}, volume = 50,
+  onPlayerVolumeChange, onMasterVolumeChange,
+  anchorRight, anchorBottom,
+}) {
   const activeGroup     = rooms.find(g => g.active);
   const activePlayerIds = new Set(activeGroup?.playerIds || []);
   const otherGroups     = rooms.filter(g => !g.active);
-  const inGroup         = players.filter(p => activePlayerIds.has(p.id));
-  const notInGroup      = players.filter(p => !activePlayerIds.has(p.id));
 
-  const PANEL_LABEL = {
+  // Always alphabetical — never jumps around
+  const sorted     = [...players].sort((a, b) => a.name.localeCompare(b.name));
+  const inGroup    = sorted.filter(p => activePlayerIds.has(p.id));
+  const notInGroup = sorted.filter(p => !activePlayerIds.has(p.id));
+
+  const LABEL = {
     padding: '10px 18px 6px',
     fontFamily: '"JetBrains Mono", ui-monospace, monospace',
     fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.35)',
   };
-  const DIVIDER = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
+  const HR = { margin: '2px 18px', borderTop: '0.5px solid rgba(255,255,255,0.08)' };
 
   return (
     <div style={{
       position: 'absolute', bottom: anchorBottom, right: anchorRight,
-      width: 280, paddingBottom: 6,
-      background: 'rgba(10,10,12,0.88)',
+      width: 290,
+      maxHeight: '74vh', overflowY: 'auto',
+      background: 'rgba(10,10,12,0.93)',
       backdropFilter: 'blur(40px) saturate(160%)',
       WebkitBackdropFilter: 'blur(40px) saturate(160%)',
       border: '0.5px solid rgba(255,255,255,0.14)',
@@ -272,34 +148,98 @@ function SpeakerPanel({ rooms = [], players = [], activeGroupId,
       animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
     }}>
 
-      {/* Other sources — tap to switch */}
+      {/* Other sources — tap to switch active group */}
       {otherGroups.length > 0 && (
         <>
-          <div style={PANEL_LABEL}>Sources</div>
-          {otherGroups.map(g => <SourceRow key={g.id} group={g} onClick={() => onSwitchGroup?.(g.id)} />)}
-          <div style={DIVIDER} />
+          <div style={LABEL}>Sources</div>
+          {otherGroups.map(g => (
+            <SourceRow key={g.id} group={g} onClick={() => onSwitchGroup?.(g.id)} />
+          ))}
+          <div style={HR} />
         </>
       )}
 
-      {/* Players in the active group */}
-      <div style={PANEL_LABEL}>This group</div>
+      {/* Speakers in the active group */}
+      <div style={LABEL}>This group</div>
       {inGroup.length === 0
-        ? <div style={{ padding: '4px 18px 6px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>No speakers</div>
-        : inGroup.map(p => <SpeakerRow key={p.id} player={p} inGroup onToggle={() => onRemovePlayer?.(p.id)} />)
+        ? <div style={{ padding: '4px 18px 10px', fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>
+            No speakers
+          </div>
+        : inGroup.map(p => (
+            <SpeakerRow
+              key={p.id}
+              player={p}
+              inGroup
+              onToggle={() => onRemovePlayer?.(p.id)}
+              volume={playerVolumes[p.id]}
+              onVolumeChange={(v) => onPlayerVolumeChange?.(p.id, v)}
+            />
+          ))
       }
 
-      {/* Available speakers to add */}
+      {/* Speakers available to add */}
       {notInGroup.length > 0 && (
         <>
-          <div style={DIVIDER} />
-          <div style={PANEL_LABEL}>Add speakers</div>
-          {notInGroup.map(p => <SpeakerRow key={p.id} player={p} inGroup={false} onToggle={() => onAddPlayer?.(p.id)} />)}
+          <div style={HR} />
+          <div style={LABEL}>Add speakers</div>
+          {notInGroup.map(p => (
+            <SpeakerRow
+              key={p.id}
+              player={p}
+              inGroup={false}
+              onToggle={() => onAddPlayer?.(p.id)}
+            />
+          ))}
         </>
       )}
+
+      {/* ── Master volume footer ─────────────────────────────────────────── */}
+      <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)', margin: '6px 0 0' }} />
+      <div style={{ padding: '10px 18px 16px' }}>
+        <div style={{ ...LABEL, padding: '0 0 10px' }}>Master</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ opacity: 0.4, display: 'flex', flexShrink: 0 }}>
+            <IconVolumeLow size={14} />
+          </span>
+          <div style={{
+            flex: 1, position: 'relative', height: 3,
+            background: 'rgba(255,255,255,0.12)', borderRadius: 999,
+          }}>
+            <div style={{
+              position: 'absolute', left: 0, top: 0, height: '100%',
+              width: `${volume}%`, background: 'rgba(255,255,255,0.8)', borderRadius: 999,
+            }} />
+            <div style={{
+              position: 'absolute', left: `${volume}%`, top: '50%',
+              width: 13, height: 13, borderRadius: '50%',
+              background: '#fff', transform: 'translate(-50%, -50%)',
+              boxShadow: '0 1px 5px rgba(0,0,0,0.5)',
+            }} />
+            <input type="range" min="0" max="100" value={volume}
+                   onChange={(e) => onMasterVolumeChange?.(Number(e.target.value))}
+                   style={{
+                     position: 'absolute', inset: -8, width: 'calc(100% + 16px)',
+                     opacity: 0, cursor: 'pointer',
+                   }} />
+          </div>
+          <span style={{ opacity: 0.65, display: 'flex', flexShrink: 0 }}>
+            <IconVolumeHigh size={14} />
+          </span>
+          <div style={{
+            minWidth: 22, textAlign: 'right',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: 10, letterSpacing: '0.06em',
+            color: 'rgba(255,255,255,0.5)', fontVariantNumeric: 'tabular-nums',
+          }}>
+            {volume}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
+// ─── SourceRow ────────────────────────────────────────────────────────────
 function SourceRow({ group, onClick }) {
   const playing = group.playbackState === 'PLAYBACK_STATE_PLAYING';
   return (
@@ -329,36 +269,89 @@ function SourceRow({ group, onClick }) {
   );
 }
 
-function SpeakerRow({ player, inGroup, onToggle }) {
+// ─── SpeakerRow ───────────────────────────────────────────────────────────
+// For speakers IN the group: name · toggle · volume slider
+// For speakers NOT in the group: name · toggle (no slider)
+function SpeakerRow({ player, inGroup, onToggle, volume, onVolumeChange }) {
   return (
-    <button onClick={onToggle} style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      width: '100%', padding: '8px 18px',
-      background: 'transparent', border: 'none', color: '#fff',
-      cursor: 'pointer', textAlign: 'left',
+    <div style={{
+      padding: '7px 18px 4px',
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-      WebkitTapHighlightColor: 'transparent',
     }}>
-      <span style={{ fontSize: 13, fontWeight: 500, color: inGroup ? '#fff' : 'rgba(255,255,255,0.45)' }}>
-        {player.name}
-      </span>
-      <span style={{
-        width: 34, height: 20, borderRadius: 999, flexShrink: 0,
-        background: inGroup ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
-        position: 'relative', transition: 'background .18s',
+      {/* Name + toggle row */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: inGroup ? 6 : 3,
       }}>
         <span style={{
-          position: 'absolute', top: 2, left: inGroup ? 14 : 2,
-          width: 16, height: 16, borderRadius: '50%',
-          background: '#fff', transition: 'left .18s',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-        }} />
-      </span>
-    </button>
+          fontSize: 13, fontWeight: 500,
+          color: inGroup ? '#fff' : 'rgba(255,255,255,0.45)',
+        }}>
+          {player.name}
+        </span>
+        <button onClick={onToggle} style={{
+          background: 'transparent', border: 'none', padding: 0,
+          cursor: 'pointer', flexShrink: 0, WebkitTapHighlightColor: 'transparent',
+        }}>
+          <span style={{
+            display: 'block',
+            width: 34, height: 20, borderRadius: 999,
+            background: inGroup ? '#3ecf6a' : 'rgba(255,255,255,0.15)',
+            position: 'relative', transition: 'background .18s',
+          }}>
+            <span style={{
+              position: 'absolute', top: 2, left: inGroup ? 14 : 2,
+              width: 16, height: 16, borderRadius: '50%',
+              background: '#fff', transition: 'left .18s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            }} />
+          </span>
+        </button>
+      </div>
+
+      {/* Per-speaker volume slider — only when in group */}
+      {inGroup && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 5 }}>
+          <div style={{
+            flex: 1, position: 'relative', height: 2,
+            background: 'rgba(255,255,255,0.1)', borderRadius: 999,
+          }}>
+            <div style={{
+              position: 'absolute', left: 0, top: 0, height: '100%',
+              width: `${volume ?? 50}%`,
+              background: 'rgba(255,255,255,0.55)', borderRadius: 999,
+            }} />
+            <div style={{
+              position: 'absolute', left: `${volume ?? 50}%`, top: '50%',
+              width: 11, height: 11, borderRadius: '50%',
+              background: '#fff', transform: 'translate(-50%, -50%)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+            }} />
+            <input
+              type="range" min="0" max="100"
+              value={volume ?? 50}
+              onChange={(e) => onVolumeChange?.(Number(e.target.value))}
+              style={{
+                position: 'absolute', inset: -6, width: 'calc(100% + 12px)',
+                opacity: 0, cursor: 'pointer',
+              }}
+            />
+          </div>
+          <div style={{
+            minWidth: 20, textAlign: 'right',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: 9, letterSpacing: '0.1em',
+            color: 'rgba(255,255,255,0.38)', fontVariantNumeric: 'tabular-nums',
+          }}>
+            {volume ?? '--'}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-// ─── Horizontal volume panel (used over album art) ────────────────────────
+// ─── VolumePanel — kept for compatibility (no longer shown by default) ─────
 function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
   return (
     <div style={{
@@ -404,6 +397,65 @@ function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
         color: 'rgba(255,255,255,0.75)', fontVariantNumeric: 'tabular-nums',
       }}>
         {volume}
+      </div>
+    </div>
+  );
+}
+
+// ─── VerticalVolumeSlider — kept for reference (unused) ───────────────────
+function VerticalVolumeSlider({ volume, onChange, scale = 1 }) {
+  const trackRef = React.useRef(null);
+  const calc = (e) => {
+    const rect = trackRef.current.getBoundingClientRect();
+    const y = (e.clientY - rect.top) / rect.height;
+    onChange(Math.round(Math.max(0, Math.min(1, 1 - y)) * 100));
+  };
+  const VolumeIcon = volume < 33 ? IconVolumeLow : volume > 66 ? IconVolumeHigh : IconVolume;
+  return (
+    <div style={{
+      position: 'absolute', top: '38%', bottom: 56 * scale, left: 0, right: 0,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 20,
+      animation: 'panelIn .18s cubic-bezier(.2,.7,.3,1)',
+    }}>
+      <div style={{
+        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+        fontSize: 10 * scale, letterSpacing: '0.18em',
+        color: 'rgba(255,255,255,0.45)', marginBottom: 10 * scale,
+        fontVariantNumeric: 'tabular-nums',
+      }}>{String(volume).padStart(2, '0')}</div>
+      <div ref={trackRef} style={{
+        flex: 1, width: 48 * scale, position: 'relative',
+        display: 'flex', justifyContent: 'center',
+        cursor: 'ns-resize', touchAction: 'none',
+      }}
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); calc(e); }}
+        onPointerMove={(e) => { if (e.buttons) calc(e); }}
+      >
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0,
+          width: 2 * scale, background: 'rgba(255,255,255,0.12)', borderRadius: 999,
+        }}>
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: `${volume}%`, background: 'rgba(255,255,255,0.75)', borderRadius: 999,
+          }} />
+          <div style={{
+            position: 'absolute', bottom: `${volume}%`, left: '50%',
+            transform: 'translate(-50%, 50%)',
+            width: 13 * scale, height: 13 * scale, borderRadius: '50%',
+            background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+          }} />
+        </div>
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#000', borderRadius: '50%',
+          width: 30 * scale, height: 30 * scale,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <VolumeIcon size={18 * scale} />
+        </div>
       </div>
     </div>
   );

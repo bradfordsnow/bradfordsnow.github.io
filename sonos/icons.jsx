@@ -60,12 +60,12 @@ const IconSkipForward = ({ size }) => (
   </Icon>
 );
 
-// Speaker / Sonos-room icon — a rectangular display-on-stand silhouette.
+// Speaker — bookshelf speaker cabinet with woofer + tweeter
 const IconSpeaker = ({ size }) => (
   <Icon size={size}>
-    <rect x="3.5" y="4" width="17" height="12.5" rx="1.3" />
-    <path d="M9 20h6" />
-    <path d="M12 16.5V20" />
+    <rect x="4.5" y="2" width="11" height="20" rx="2" />
+    <circle cx="10" cy="14" r="3" />
+    <circle cx="10" cy="7" r="1.5" />
   </Icon>
 );
 

@@ -7,12 +7,12 @@
 
 function PortraitLayout({
   width, height, vinyl, paused, shazam,
-  volume, volumeOpen, speakerOpen,
+  volume, speakerOpen,
+  playerVolumes = {}, onPlayerVolumeChange, onMasterVolumeChange,
   rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onVolumeClick, onSpeakerClick, onVolumeChange,
-  onSwitchGroup, onAddPlayer, onRemovePlayer,
+  onSpeakerClick, onSwitchGroup, onAddPlayer, onRemovePlayer,
   compact = false, lines = 3, track = {},
 }) {
   const s = compact ? 0.5 : 1;
@@ -53,14 +53,13 @@ function PortraitLayout({
           ? <VinylMode width={artSize} height={artSize} paused={paused} />
           : <AlbumArt size={artSize} />}
 
-        {volumeOpen && (
-          <VolumePanel volume={volume} onChange={onVolumeChange}
-                       anchorTop={20 * s} anchorRight={20 * s} />
-        )}
         {speakerOpen && (
           <SpeakerPanel
             rooms={rooms} players={players} activeGroupId={activeGroupId}
             onSwitchGroup={onSwitchGroup} onAddPlayer={onAddPlayer} onRemovePlayer={onRemovePlayer}
+            volume={volume} playerVolumes={playerVolumes}
+            onMasterVolumeChange={onMasterVolumeChange}
+            onPlayerVolumeChange={onPlayerVolumeChange}
             anchorBottom={20 * s} anchorRight={20 * s} />
         )}
       </div>
@@ -74,8 +73,6 @@ function PortraitLayout({
           vinyl={vinyl} paused={paused}
           active={controlsActive} onWake={onWake}
           onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
-          volume={volume}
-          onVolumeClick={onVolumeClick}
           onSpeakerClick={onSpeakerClick}
           roomsActive={roomsActive}
           scale={s}
@@ -86,17 +83,13 @@ function PortraitLayout({
 }
 
 // ─── Horizontal controls dock (portrait analogue of the right strip) ──────
-// Volume / playback / speakers clustered together with explicit gaps —
-// the user wanted these closer together than the previous space-between
-// layout.
+// Playback buttons + speaker button clustered together.
+// Volume is now inside the SpeakerPanel — no standalone volume button.
 function HorizontalControls({
   vinyl, paused, active, onWake,
   onPause, onSkipBack, onSkipForward,
-  volume, onVolumeClick, onSpeakerClick, roomsActive, scale = 1,
-  // new props accepted but not passed deeper (SpeakerPanel lives in PortraitLayout)
-  rooms, players, activeGroupId, onSwitchGroup, onAddPlayer, onRemovePlayer,
+  onSpeakerClick, roomsActive, scale = 1,
 }) {
-  const VolumeIcon = volume < 33 ? IconVolumeLow : volume > 66 ? IconVolumeHigh : IconVolume;
   return (
     <div onPointerDown={onWake} style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -104,20 +97,6 @@ function HorizontalControls({
       opacity: active ? 1 : 0.22,
       transition: 'opacity .9s cubic-bezier(.3,.7,.4,1)',
     }}>
-      {/* Volume */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 * scale }}>
-        <ControlButton onClick={onVolumeClick} label="Volume" size={44 * scale}>
-          <VolumeIcon size={26 * scale} />
-        </ControlButton>
-        <div style={{
-          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontSize: 9 * scale, letterSpacing: '0.18em',
-          color: 'rgba(255,255,255,0.5)',
-          fontVariantNumeric: 'tabular-nums',
-        }}>
-          {String(volume).padStart(2, '0')}
-        </div>
-      </div>
 
       {/* Playback */}
       {!vinyl && (

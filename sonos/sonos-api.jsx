@@ -157,6 +157,7 @@ const SonosAPI = {
 
   getVolume(groupId)             { return this._get(`/groups/${groupId}/playback/volume`); },
   setVolume(groupId, volume)     { return this._post(`/groups/${groupId}/playback/volume`, { volume }); },
+  getPlayerVolume(playerId)      { return this._get(`/players/${playerId}/playerVolume`); },
   setPlayerVolume(playerId, vol) { return this._post(`/players/${playerId}/playerVolume`, { volume: vol }); },
 
   // ── Group membership ───────────────────────────────────────────────────

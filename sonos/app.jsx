@@ -44,11 +44,13 @@ function useSonos() {
     positionSecs:  0,
     volume:        40,
     vinyl:         false,
+    playerVolumes: {},
   });
 
-  const householdRef    = useRef(null);
-  const selectedGroupRef = useRef(null);  // locked group — survives pause/stop
-  const volumeDebounce  = useRef(null);
+  const householdRef          = useRef(null);
+  const selectedGroupRef      = useRef(null);  // locked group — survives pause/stop
+  const volumeDebounce        = useRef(null);
+  const playerVolumeDebounces = useRef({});
 
   const poll = useCallback(async () => {
     try {
@@ -132,6 +134,19 @@ function useSonos() {
     return () => clearInterval(id);
   }, [poll]);
 
+  // Fetch current volumes for all players in a group (called when speaker panel opens)
+  const refreshPlayerVolumes = useCallback(async (playerIds) => {
+    if (!playerIds?.length) return;
+    const vols = {};
+    await Promise.all(playerIds.map(async (id) => {
+      try {
+        const res = await SonosAPI.getPlayerVolume(id);
+        if (typeof res.volume === 'number') vols[id] = res.volume;
+      } catch {}
+    }));
+    setData(d => ({ ...d, playerVolumes: { ...d.playerVolumes, ...vols } }));
+  }, []);
+
   const actions = {
     togglePlay: () => {
       setData(d => {
@@ -176,9 +191,16 @@ function useSonos() {
         return d;
       });
     },
+    setPlayerVol: (playerId, vol) => {
+      setData(d => ({ ...d, playerVolumes: { ...d.playerVolumes, [playerId]: vol } }));
+      if (playerVolumeDebounces.current[playerId]) clearTimeout(playerVolumeDebounces.current[playerId]);
+      playerVolumeDebounces.current[playerId] = setTimeout(() => {
+        SonosAPI.setPlayerVolume(playerId, vol);
+      }, 400);
+    },
   };
 
-  return { data, actions, poll };
+  return { data, actions, poll, refreshPlayerVolumes };
 }
 
 // ─── Root — auth gate + OAuth callback handler ────────────────────────────
@@ -342,14 +364,12 @@ const IS_REAL_DEVICE = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const { data, actions } = useSonos();
+  const { data, actions, refreshPlayerVolumes } = useSonos();
 
-  const [volumeOpen,   setVolumeOpen]   = useState(false);
-  const [speakerOpen,  setSpeakerOpen]  = useState(false);
+  const [speakerOpen,    setSpeakerOpen]    = useState(false);
   const [controlsActive, setControlsActive] = useState(false);
 
   const controlsTimer = useRef(null);
-  const volumeTimer   = useRef(null);
   const speakerTimer  = useRef(null);
 
   const wakeControls = () => {
@@ -357,22 +377,24 @@ function App() {
     clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setControlsActive(false), 10000);
   };
-  const resetVolumeTimer  = () => {
-    clearTimeout(volumeTimer.current);
-    volumeTimer.current = setTimeout(() => setVolumeOpen(false), 10000);
-  };
   const resetSpeakerTimer = () => {
     clearTimeout(speakerTimer.current);
-    speakerTimer.current = setTimeout(() => setSpeakerOpen(false), 10000);
+    speakerTimer.current = setTimeout(() => setSpeakerOpen(false), 15000);
   };
 
-  useEffect(() => { if (volumeOpen)  resetVolumeTimer();  }, [volumeOpen]);
   useEffect(() => { if (speakerOpen) resetSpeakerTimer(); }, [speakerOpen]);
 
-  const onVolumeClick  = () => { setSpeakerOpen(false); setVolumeOpen(v => !v); };
-  const onSpeakerClick = () => { setVolumeOpen(false);  setSpeakerOpen(v => !v); };
-  const onVolumeChange = v  => { actions.setVolume(v); resetVolumeTimer(); wakeControls(); };
-  const onToggleRoom   = id => { actions.toggleRoom(id); resetSpeakerTimer(); wakeControls(); };
+  const onSpeakerClick = () => { setSpeakerOpen(v => !v); };
+
+  // Fetch per-player volumes whenever the speaker panel opens
+  useEffect(() => {
+    if (speakerOpen) {
+      const activeGroup = data.groups.find(g => g.active);
+      if (activeGroup?.playerIds?.length) {
+        refreshPlayerVolumes(activeGroup.playerIds);
+      }
+    }
+  }, [speakerOpen]);
 
   // Effective vinyl mode: API says nothing playing → show vinyl
   const vinyl = t.vinyl || data.vinyl;
@@ -404,21 +426,22 @@ function App() {
 
   const layoutProps = {
     vinyl, paused: !data.playing, shazam: t.shazam,
-    volume: data.volume, volumeOpen, speakerOpen,
+    volume: data.volume, speakerOpen,
+    playerVolumes: data.playerVolumes,
     rooms: data.groups, players: data.players, roomsActive,
     activeGroupId: data.activeGroupId,
     controlsActive, onWake: wakeControls,
     track: data.track || {},
     positionSecs: data.positionSecs,
-    onPause:         () => { actions.togglePlay(); wakeControls(); },
-    onSkipBack:      () => { actions.skipPrev();   wakeControls(); },
-    onSkipForward:   () => { actions.skipNext();   wakeControls(); },
-    onVolumeClick:   () => { onVolumeClick(); wakeControls(); },
-    onSpeakerClick:  () => { onSpeakerClick(); wakeControls(); },
-    onVolumeChange,
-    onSwitchGroup:   (id) => { actions.switchGroup(id);    wakeControls(); },
-    onAddPlayer:     (id) => { actions.addToGroup(id);     wakeControls(); },
-    onRemovePlayer:  (id) => { actions.removeFromGroup(id); wakeControls(); },
+    onPause:              () => { actions.togglePlay(); wakeControls(); },
+    onSkipBack:           () => { actions.skipPrev();   wakeControls(); },
+    onSkipForward:        () => { actions.skipNext();   wakeControls(); },
+    onSpeakerClick:       () => { onSpeakerClick(); wakeControls(); },
+    onMasterVolumeChange: (v)       => { actions.setVolume(v);       wakeControls(); },
+    onPlayerVolumeChange: (id, v)   => { actions.setPlayerVol(id, v); wakeControls(); },
+    onSwitchGroup:        (id) => { actions.switchGroup(id);     wakeControls(); },
+    onAddPlayer:          (id) => { actions.addToGroup(id);      wakeControls(); },
+    onRemovePlayer:       (id) => { actions.removeFromGroup(id); wakeControls(); },
     typeScale, lines: t.spineLines,
   };
 
@@ -589,11 +612,12 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
 // ─── Landscape layout ─────────────────────────────────────────────────────
 function LandscapeLayout({
   width, height, vinyl, paused, shazam,
-  volume, volumeOpen, speakerOpen,
+  volume, speakerOpen,
+  playerVolumes = {}, onPlayerVolumeChange, onMasterVolumeChange,
   rooms = [], players = [], roomsActive, activeGroupId,
   controlsActive, onWake,
   onPause, onSkipBack, onSkipForward,
-  onVolumeClick, onSpeakerClick, onVolumeChange,
+  onSpeakerClick,
   onSwitchGroup, onAddPlayer, onRemovePlayer,
   typeScale = 1, lines = 1, track = {},
   positionSecs = 0,
@@ -626,14 +650,12 @@ function LandscapeLayout({
           ? <VinylMode width={artSize} height={artSize} paused={paused} />
           : <AlbumArt size={artSize} url={track?.artworkUrl} />}
 
-        {volumeOpen && (
-          <VolumePanel volume={volume} onChange={onVolumeChange}
-                       anchorTop={200 * typeScale} anchorRight={20 * typeScale} />
-        )}
         {speakerOpen && (
           <SpeakerPanel
             rooms={rooms} players={players} activeGroupId={activeGroupId}
             onSwitchGroup={onSwitchGroup} onAddPlayer={onAddPlayer} onRemovePlayer={onRemovePlayer}
+            volume={volume} playerVolumes={playerVolumes}
+            onMasterVolumeChange={onMasterVolumeChange} onPlayerVolumeChange={onPlayerVolumeChange}
             anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
         )}
       </div>
@@ -647,9 +669,7 @@ function LandscapeLayout({
         <Controls width={controlW} vinyl={vinyl} paused={paused}
                   active={controlsActive} onWake={onWake}
                   onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
-                  volume={volume}
-                  onVolumeClick={onVolumeClick} volumeOpen={volumeOpen}
-                  onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
+                  onSpeakerClick={onSpeakerClick}
                   roomsActive={roomsActive} scale={typeScale} />
 
         <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0,
