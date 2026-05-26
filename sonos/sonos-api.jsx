@@ -73,7 +73,10 @@ const SonosAPI = {
       },
       body: new URLSearchParams(body),
     });
-    if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`Token ${res.status}: ${errBody}`);
+    }
     return res.json();
   },
 
