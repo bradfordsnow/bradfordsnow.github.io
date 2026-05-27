@@ -690,6 +690,7 @@ function App() {
                      onChange={v => setTweak('vinyl', v)} />
         <TweakToggle label="Identify via Shazam" value={t.shazam}
                      onChange={v => setTweak('shazam', v)} />
+        {/* Art Debug — uncomment to re-enable the "Show art URLs" diagnostic button
         <TweakSection label="Art Debug" />
         <TweakButton label="Show art URLs" onClick={() => {
           const d = window._sonosArtDebug;
@@ -705,6 +706,7 @@ function App() {
             'Vinyl mode: ' + (d.vinylActive ? 'YES (no art URL)' : 'no')
           );
         }} />
+        */}
         <TweakSection label="Account" />
         <TweakButton label="Sign out" onClick={() => {
           SonosAPI.logout();
