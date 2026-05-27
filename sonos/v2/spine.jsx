@@ -127,17 +127,17 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
       <span style={{
         flexShrink: 0, whiteSpace: 'nowrap',
         fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-        fontSize: 16 * scale, fontWeight: 500, letterSpacing: '0.28em',
+        fontSize: 30 * scale, fontWeight: 500, letterSpacing: '0.28em',
         textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
       }}>{track.artist || 'Now Playing'}</span>
 
-      {track.song && <SongFlex size={48 * scale} name={track.song} />}
+      {track.song && <SongFlex size={60 * scale} name={track.song} />}
 
       {albumText && (
         <span style={{
           flexShrink: 0, whiteSpace: 'nowrap',
           fontFamily: '"Cormorant Garamond", serif',
-          fontSize: 24 * scale, fontStyle: 'italic', fontWeight: 400,
+          fontSize: 30 * scale, fontStyle: 'italic', fontWeight: 400,
           color: 'rgba(255,255,255,0.52)',
         }}>{albumText}{track.year ? ` – ${track.year}` : ''}</span>
       )}

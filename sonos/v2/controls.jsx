@@ -58,8 +58,8 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           <div style={{
             display: 'flex', flexDirection: 'column',
             alignItems: 'center',
-            gap: 3 * scale,
-            padding: `${5 * scale}px 0`,
+            gap: 2 * scale,
+            padding: `${4 * scale}px 0`,
             background: 'rgba(255,255,255,0.055)',
             backdropFilter: 'blur(24px) saturate(160%)',
             WebkitBackdropFilter: 'blur(24px) saturate(160%)',
@@ -73,21 +73,21 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           }}>
             <ControlButton
               onClick={() => handlePress('back', onSkipBack)}
-              label="Previous track" size={68 * scale} color={getColor('back')}
+              label="Previous track" size={48 * scale} color={getColor('back')}
             >
-              <IconSkipBack size={44 * scale} />
+              <IconSkipBack size={32 * scale} />
             </ControlButton>
             <ControlButton
               onClick={() => handlePress('pause', onPause)}
-              size={102 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
+              size={72 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
             >
-              {paused ? <IconPlay size={58 * scale} /> : <IconPause size={53 * scale} />}
+              {paused ? <IconPlay size={42 * scale} /> : <IconPause size={38 * scale} />}
             </ControlButton>
             <ControlButton
               onClick={() => handlePress('forward', onSkipForward)}
-              label="Next track" size={68 * scale} color={getColor('forward')}
+              label="Next track" size={48 * scale} color={getColor('forward')}
             >
-              <IconSkipForward size={44 * scale} />
+              <IconSkipForward size={32 * scale} />
             </ControlButton>
           </div>
         )}
@@ -104,7 +104,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           onPointerDown={(e) => e.stopPropagation()}
           aria-label="Speakers"
           style={{
-            width: 62 * scale, height: 62 * scale,
+            width: 44 * scale, height: 44 * scale,
             border: 'none', background: 'transparent', padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
@@ -113,7 +113,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          <IconSpeaker size={49 * scale} />
+          <IconSpeaker size={34 * scale} />
         </button>
       </div>
     </div>

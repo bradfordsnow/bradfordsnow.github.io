@@ -599,9 +599,14 @@ const _DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const _MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const _JF     = '"Plus Jakarta Sans", system-ui, sans-serif';
 
-function Clock({ scale = 1 }) {
+function Clock({ scale = 1, sideW = 0 }) {
   const [time,    setTime]    = useState(new Date());
   const [weather, setWeather] = useState(null);
+
+  // Scale clock content down so it always fits the right column.
+  // "12:00" at 72px PJS weight-500 + 0.1em LS ≈ 190px natural width.
+  // Subtract 20px padding (10 each side). Cap at the device typeScale.
+  const cs = sideW > 0 ? Math.min(scale, (sideW - 20) / 190) : scale;
 
   // Minute-accurate clock sync
   useEffect(() => {
@@ -631,18 +636,18 @@ function Clock({ scale = 1 }) {
   const dateStr = `${_DAYS[time.getDay()]}  ${_MONTHS[time.getMonth()]} ${time.getDate()}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * scale }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * cs }}>
 
       {/* Date — Plus Jakarta Sans, matches artist style */}
       <div style={{
-        fontFamily: _JF, fontSize: 15 * scale, fontWeight: 500,
+        fontFamily: _JF, fontSize: 15 * cs, fontWeight: 500,
         letterSpacing: '0.28em', textTransform: 'uppercase',
         color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
 
       {/* Time */}
       <div style={{
-        fontFamily: _JF, fontSize: 72 * scale, fontWeight: 500,
+        fontFamily: _JF, fontSize: 72 * cs, fontWeight: 500,
         letterSpacing: '0.1em', color: '#fff', whiteSpace: 'nowrap',
         lineHeight: 1,
       }}>{hr12}:{String(m).padStart(2, '0')}</div>
@@ -650,19 +655,19 @@ function Clock({ scale = 1 }) {
       {/* Weather: 58°   72°   85° */}
       {weather && (
         <div style={{
-          display: 'flex', alignItems: 'baseline', gap: 14 * scale,
+          display: 'flex', alignItems: 'baseline', gap: 14 * cs,
           fontFamily: _JF,
         }}>
           <span style={{
-            fontSize: 20 * scale, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 20 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 38 * scale, fontWeight: 500, letterSpacing: '0.1em',
+            fontSize: 38 * cs, fontWeight: 500, letterSpacing: '0.1em',
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
-            fontSize: 20 * scale, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 20 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.hi}°</span>
         </div>
@@ -715,6 +720,7 @@ function LandscapeLayout({
 }) {
   const artSize = height;
   const controlW = 160 * typeScale;  // v2: widened from 84 to fit 2× icons
+  const sideW = Math.floor((width - artSize) / 2);  // actual right-column pixel width
   const showSpine = !vinyl || (vinyl && shazam);
 
   return (
@@ -756,8 +762,8 @@ function LandscapeLayout({
                   onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
                   scale={typeScale} />
 
-        <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
-          <Clock scale={typeScale} />
+        <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+          <Clock scale={typeScale} sideW={sideW} />
         </div>
 
         <div style={{ position: 'absolute', bottom: 28 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
