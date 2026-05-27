@@ -636,7 +636,7 @@ function Clock({ scale = 1, sideW = 0 }) {
   const dateStr = `${_DAYS[time.getDay()]}  ${_MONTHS[time.getMonth()]} ${time.getDate()}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * cs }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 * cs }}>
 
       {/* Date — Plus Jakarta Sans, matches artist style (+15%) */}
       <div style={{
@@ -645,7 +645,7 @@ function Clock({ scale = 1, sideW = 0 }) {
         color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
 
-      {/* Time — two-line: hour / colon / minutes */}
+      {/* Time — two-line: hour / minutes, no separator */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 0, fontFamily: _JF, fontWeight: 500, lineHeight: 0.9,
@@ -654,18 +654,14 @@ function Clock({ scale = 1, sideW = 0 }) {
           fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
         }}>{hr12}</div>
         <div style={{
-          fontSize: 13 * cs, letterSpacing: '0.18em',
-          color: 'rgba(255,255,255,0.38)', lineHeight: 1.6,
-        }}>:</div>
-        <div style={{
           fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
         }}>{String(m).padStart(2, '0')}</div>
       </div>
 
-      {/* Weather: 58°   72°   85° */}
+      {/* Weather: 58°  72°  85° — lo/hi pulled tight to current */}
       {weather && (
         <div style={{
-          display: 'flex', alignItems: 'baseline', gap: 14 * cs,
+          display: 'flex', alignItems: 'baseline', gap: 6 * cs,
           fontFamily: _JF,
         }}>
           <span style={{
