@@ -146,55 +146,45 @@ function _bestArtUrl(meta, rawTrack, item) {
 
 var { useState, useEffect, useRef, useCallback } = React;
 
+// Key used to tell the main app where to redirect after OAuth completes
+var RETURN_KEY = 'sonos_auth_return';
+
 function SimpleApp() {
-  // Check for OAuth callback first
-  var params = new URLSearchParams(window.location.search);
-  var code  = params.get('code');
-  var state = params.get('state');
-
-  if (code && state) {
-    return React.createElement(OAuthCallback, { code: code, state: state });
-  }
-
   if (!SonosAPI.isConfigured() || !SonosAPI.isAuthenticated()) {
     return React.createElement(AuthScreen, null);
   }
-
   return React.createElement(ArtScreen, null);
 }
 
-function OAuthCallback({ code, state }) {
-  var [msg, setMsg] = useState('Connecting...');
+function AuthScreen() {
+  // IMPORTANT: generate the auth URL exactly once.
+  // SonosAPI.getAuthUrl() writes a random state to localStorage. Calling it
+  // again on a re-render would overwrite that state, so when the main app gets
+  // the OAuth callback it would see a mismatch → "possible CSRF" error.
+  var authUrlRef = useRef(null);
+  if (!authUrlRef.current) {
+    authUrlRef.current = SonosAPI.isConfigured() ? SonosAPI.getAuthUrl() : '#';
+  }
 
+  // Tell the main app to send the user back here after a successful exchange.
+  // Sonos redirects to SONOS_CONFIG.redirectUri (/sonos/) after auth, so the
+  // main app is what handles the code exchange — we just leave a breadcrumb.
   useEffect(function() {
-    SonosAPI.exchangeCode(code, state)
-      .then(function() {
-        window.location.replace(window.location.pathname);
-      })
-      .catch(function(err) {
-        setMsg('Auth failed: ' + err.message);
-      });
+    try { localStorage.setItem(RETURN_KEY, window.location.href); } catch(e) {}
   }, []);
 
   return React.createElement('div', { className: 'auth-screen' },
-    React.createElement('p', null, msg)
-  );
-}
-
-function AuthScreen() {
-  var authUrl = SonosAPI.isConfigured() ? SonosAPI.getAuthUrl() : '#';
-  return React.createElement('div', { className: 'auth-screen' },
     React.createElement('p', null, 'Connect to Sonos to display album art'),
-    React.createElement('a', { href: authUrl }, 'Sign In')
+    React.createElement('a', { href: authUrlRef.current }, 'Sign In')
   );
 }
 
 function ArtScreen() {
-  var [artUrl, setArtUrl]   = useState('');
   var [imgSrc, setImgSrc]   = useState('');
   var [error, setError]     = useState(null);
   var householdRef          = useRef(null);
   var selectedGroupRef      = useRef(null);
+  var pendingUrlRef         = useRef('');   // hi-res URL currently being fetched
 
   var poll = useCallback(function() {
     var hid;
@@ -212,7 +202,10 @@ function ArtScreen() {
       var item     = s.meta && s.meta.currentItem;
       var rawTrack = item && item.track;
       var url      = _bestArtUrl(s.meta, rawTrack, item);
-      setArtUrl(url || '');
+      if (url && url !== pendingUrlRef.current) {
+        pendingUrlRef.current = url;
+        setImgSrc(url);
+      }
       setError(null);
     }).catch(function(err) {
       setError(err.message);
@@ -225,18 +218,10 @@ function ArtScreen() {
     return function() { clearInterval(id); };
   }, [poll]);
 
-  // Update displayed image only when URL actually changes
-  useEffect(function() {
-    if (artUrl) setImgSrc(artUrl);
-  }, [artUrl]);
-
   var handleError = function() {
-    // Try original (non-hi-res) URL if hi-res failed
-    if (artUrl && imgSrc !== artUrl) {
-      setImgSrc(artUrl);
-    } else {
-      setImgSrc('');
-    }
+    // Image failed to load — clear and let the next poll try again
+    pendingUrlRef.current = '';
+    setImgSrc('');
   };
 
   return React.createElement('div', { className: 'art-screen' },

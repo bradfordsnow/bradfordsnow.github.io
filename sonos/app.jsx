@@ -286,6 +286,14 @@ function Root() {
         .then(() => {
           window.history.replaceState({}, '', window.location.pathname);
           localStorage.setItem(SETUP_KEY, '1');
+          // If auth was initiated from another page (e.g. /sonos/simple/), go back there.
+          // The simple viewer stores its URL in localStorage before redirecting to auth.
+          const returnUrl = localStorage.getItem('sonos_auth_return');
+          if (returnUrl) {
+            localStorage.removeItem('sonos_auth_return');
+            window.location.replace(returnUrl);
+            return;
+          }
           setPhase('ready');
         })
         .catch(err => {

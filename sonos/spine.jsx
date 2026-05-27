@@ -22,6 +22,10 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
     const el = containerRef.current;
     if (!el) return;
     setAvailH(el.offsetHeight);
+    // ResizeObserver unavailable on iOS < 13.4 — fall back to the initial
+    // offsetHeight snapshot. The spine still renders; it just won't re-measure
+    // if the container is resized (fine for a fixed-layout display app).
+    if (typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(() => setAvailH(el.offsetHeight));
     ro.observe(el);
     return () => ro.disconnect();
