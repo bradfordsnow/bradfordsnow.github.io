@@ -147,12 +147,14 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
 
 // ─── SongFlex — scrolling song title within a flex container ─────────────
 // Sits at flex: 1 1 0 between artist (left) and album (right).
-// Measures the container width; if the text overflows, runs the same
-// continuous two-copy marquee as Song. ResizeObserver guard for old iOS.
+// Pauses for 5 s at the start of each revolution via animationiteration +
+// direct DOM animationPlayState (avoids React async delay at the reset point).
 function SongFlex({ size, name }) {
   const { useRef, useEffect, useState } = React;
   const containerRef = useRef(null);
   const textRef      = useRef(null);
+  const scrollRef    = useRef(null);
+  const pauseTimer   = useRef(null);
   const [textW,      setTextW]      = useState(0);
   const [containerW, setContainerW] = useState(0);
 
@@ -168,10 +170,28 @@ function SongFlex({ size, name }) {
     return () => ro.disconnect();
   }, [name, size]);
 
+  // Reset pause when track changes
+  useEffect(() => {
+    clearTimeout(pauseTimer.current);
+    if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+  }, [name]);
+
+  // Cleanup on unmount
+  useEffect(() => () => clearTimeout(pauseTimer.current), []);
+
   if (!name) return null;
 
   const GAP = 88;
   const shouldScroll = containerW > 0 && textW > containerW + 10;
+
+  const handleIteration = () => {
+    if (!scrollRef.current) return;
+    scrollRef.current.style.animationPlayState = 'paused';
+    clearTimeout(pauseTimer.current);
+    pauseTimer.current = setTimeout(() => {
+      if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+    }, 5000);
+  };
 
   const textStyle = {
     fontFamily: '"Cormorant Garamond", serif',
@@ -185,7 +205,7 @@ function SongFlex({ size, name }) {
     const dur = (totalDist / 48).toFixed(2);
     return (
       <div ref={containerRef} style={{ flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}>
-        <div style={{
+        <div ref={scrollRef} onAnimationIteration={handleIteration} style={{
           display: 'inline-flex', alignItems: 'baseline',
           '--ms-dist': `-${totalDist}px`,
           animation: `continuousScroll ${dur}s linear infinite`,
@@ -211,7 +231,9 @@ function SongFlex({ size, name }) {
 // Hooks always called (no conditional hook calls — React rules).
 function Song({ size, name, maxWidth }) {
   const { useRef, useEffect, useState } = React;
-  const spanRef = useRef(null);
+  const spanRef    = useRef(null);
+  const scrollRef  = useRef(null);
+  const pauseTimer = useRef(null);
   const [textW, setTextW] = useState(0);
 
   useEffect(() => {
@@ -219,10 +241,26 @@ function Song({ size, name, maxWidth }) {
     setTextW(spanRef.current.offsetWidth);
   }, [name, size]);
 
+  useEffect(() => {
+    clearTimeout(pauseTimer.current);
+    if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+  }, [name]);
+
+  useEffect(() => () => clearTimeout(pauseTimer.current), []);
+
   if (!name) return null;
 
-  const GAP = 88;  // px gap between end of first copy and start of second
+  const GAP = 88;
   const shouldScroll = maxWidth != null && textW > 0 && textW > maxWidth + 10;
+
+  const handleIteration = () => {
+    if (!scrollRef.current) return;
+    scrollRef.current.style.animationPlayState = 'paused';
+    clearTimeout(pauseTimer.current);
+    pauseTimer.current = setTimeout(() => {
+      if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+    }, 5000);
+  };
 
   const textStyle = {
     fontFamily: '"Cormorant Garamond", serif',
@@ -234,11 +272,10 @@ function Song({ size, name, maxWidth }) {
   if (maxWidth != null) {
     if (shouldScroll) {
       const totalDist = textW + GAP;
-      // 48px/s — readable but steady
       const dur = (totalDist / 48).toFixed(2);
       return (
         <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
-          <div style={{
+          <div ref={scrollRef} onAnimationIteration={handleIteration} style={{
             display: 'inline-flex', alignItems: 'center',
             '--ms-dist': `-${totalDist}px`,
             animation: `continuousScroll ${dur}s linear infinite`,
@@ -249,7 +286,6 @@ function Song({ size, name, maxWidth }) {
         </div>
       );
     }
-    // Fits — just render with ref so we can measure on next track change
     return (
       <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
         <span ref={spanRef} style={textStyle}>{name}</span>

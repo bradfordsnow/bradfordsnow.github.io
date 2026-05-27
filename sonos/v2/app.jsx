@@ -610,9 +610,9 @@ function Clock({ scale = 1, sideW = 0 }) {
   const [weather, setWeather] = useState(null);
 
   // Scale clock content to fit the right column.
-  // Two-line layout: widest element is "00" (minutes) at 72px PJS weight-500
-  // + 0.1em LS ≈ 105px natural width. Subtract 20px padding.
-  const cs = sideW > 0 ? Math.min(scale, (sideW - 20) / 105) : scale;
+  // Two-line layout: widest element is "00" (minutes) at 90px PJS weight-500
+  // + 0.1em LS ≈ 135px natural width. Subtract 20px padding.
+  const cs = sideW > 0 ? Math.min(scale, (sideW - 20) / 135) : scale;
 
   // Minute-accurate clock sync
   useEffect(() => {
@@ -644,9 +644,9 @@ function Clock({ scale = 1, sideW = 0 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 * cs }}>
 
-      {/* Date — Plus Jakarta Sans, matches artist style (+15%) */}
+      {/* Date — Plus Jakarta Sans, matches artist style */}
       <div style={{
-        fontFamily: _JF, fontSize: 17 * cs, fontWeight: 500,
+        fontFamily: _JF, fontSize: 21 * cs, fontWeight: 500,
         letterSpacing: '0.28em', textTransform: 'uppercase',
         color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
@@ -657,10 +657,10 @@ function Clock({ scale = 1, sideW = 0 }) {
         gap: 0, fontFamily: _JF, fontWeight: 500, lineHeight: 0.9,
       }}>
         <div style={{
-          fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
+          fontSize: 90 * cs, letterSpacing: '0.1em', color: '#fff',
         }}>{hr12}</div>
         <div style={{
-          fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
+          fontSize: 90 * cs, letterSpacing: '0.1em', color: '#fff',
         }}>{String(m).padStart(2, '0')}</div>
       </div>
 
@@ -671,15 +671,15 @@ function Clock({ scale = 1, sideW = 0 }) {
           fontFamily: _JF, marginTop: 10 * cs,
         }}>
           <span style={{
-            fontSize: 20 * cs, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 25 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 38 * cs, fontWeight: 500, letterSpacing: 0,
+            fontSize: 48 * cs, fontWeight: 500, letterSpacing: 0,
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
-            fontSize: 20 * cs, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 25 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.hi}°</span>
         </div>
@@ -708,7 +708,7 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
   return (
     <div style={{
       fontFamily: _JF,
-      fontSize: 36 * scale,   // v2: doubled from 18
+      fontSize: 28 * scale,
       fontWeight: 500,
       color: 'rgba(255,255,255,0.28)',  // v2: lifted from 0.22 (25% lighter)
       letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
