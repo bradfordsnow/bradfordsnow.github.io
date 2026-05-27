@@ -54,10 +54,13 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
 // Zone 2 (inner): Artist sits at screen-bottom (HTML left), Album+Year at screen-top (HTML right).
 function SpineThreeLines({ scale, track = {}, maxW = 0 }) {
   const innerW = maxW > 0 ? maxW : undefined;
+  // height = spine column width (187px) so space-evenly distributes
+  // the blank space above, between, and below the two zones equally.
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      alignItems: 'center', gap: 44 * scale,
+      justifyContent: 'space-evenly', alignItems: 'center',
+      height: 187 * scale,
       lineHeight: 1,
     }}>
       {/* Zone 1 — outer edge: Song, scrolls when long */}

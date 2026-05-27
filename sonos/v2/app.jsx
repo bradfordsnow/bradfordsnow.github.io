@@ -631,42 +631,40 @@ function Clock({ scale = 1 }) {
   const dateStr = `${_DAYS[time.getDay()]}  ${_MONTHS[time.getMonth()]} ${time.getDate()}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 * scale }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * scale }}>
 
       {/* Date */}
       <div style={{
-        fontFamily: _JF, fontSize: 11 * scale, fontWeight: 300,
+        fontFamily: _JF, fontSize: 15 * scale, fontWeight: 300,
         letterSpacing: '0.22em', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.38)', whiteSpace: 'nowrap',
+        color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
 
       {/* Time */}
       <div style={{
-        fontFamily: _JF, fontSize: 55 * scale, fontWeight: 300,
-        letterSpacing: '0.06em', color: '#fff', whiteSpace: 'nowrap',
+        fontFamily: _JF, fontSize: 72 * scale, fontWeight: 300,
+        letterSpacing: '0.04em', color: '#fff', whiteSpace: 'nowrap',
         lineHeight: 1,
       }}>{hr12}:{String(m).padStart(2, '0')}</div>
 
-      {/* Weather: lo 58°   72°   hi 85° */}
+      {/* Weather: 58°   72°   85° */}
       {weather && (
         <div style={{
-          display: 'flex', alignItems: 'baseline', gap: 10 * scale,
+          display: 'flex', alignItems: 'baseline', gap: 14 * scale,
           fontFamily: _JF,
         }}>
           <span style={{
-            fontSize: 10 * scale, fontWeight: 300, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)',
-            whiteSpace: 'nowrap',
-          }}>lo {weather.lo}°</span>
+            fontSize: 20 * scale, fontWeight: 300, letterSpacing: '0.08em',
+            color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
+          }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 28 * scale, fontWeight: 300, letterSpacing: '0.04em',
+            fontSize: 38 * scale, fontWeight: 300, letterSpacing: '0.04em',
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
-            fontSize: 10 * scale, fontWeight: 300, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)',
-            whiteSpace: 'nowrap',
-          }}>hi {weather.hi}°</span>
+            fontSize: 20 * scale, fontWeight: 300, letterSpacing: '0.08em',
+            color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
+          }}>{weather.hi}°</span>
         </div>
       )}
     </div>
