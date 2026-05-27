@@ -54,8 +54,38 @@ function _resolveCdnUrl(url) {
   // ④ Already a clean https URL → return as-is (type 4)
   if (url.startsWith('https://')) return url;
 
-  // ⑤ Unknown / unloadable scheme (e.g. x-rincon, file://) → reject
+  // ⑤ Unknown / unloadable scheme (e.g. x-sonos-spotify, x-rincon, file://) → reject
   return null;
+}
+
+// Fallback artwork via iTunes Search API (free, no auth, CORS-enabled).
+// Used when Sonos gives us a local proxy URL whose `u` param is a streaming
+// service URI (e.g. x-sonos-spotify:spotify:track:…) rather than a CDN image.
+async function _fetchItunesArt(artist, song) {
+  if (!artist && !song) return null;
+  try {
+    const q = encodeURIComponent([artist, song].filter(Boolean).join(' '));
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=5&country=us`
+    );
+    if (!res.ok) return null;
+    const { results = [] } = await res.json();
+    const sl = song?.toLowerCase() || '';
+    const al = artist?.toLowerCase() || '';
+    // Prefer exact track+artist match, then exact track, then first result
+    const hit =
+      results.find(r =>
+        r.trackName?.toLowerCase() === sl &&
+        r.artistName?.toLowerCase().includes(al)
+      ) ||
+      results.find(r => r.trackName?.toLowerCase() === sl) ||
+      results[0];
+    if (!hit?.artworkUrl100) return null;
+    // Apple CDN supports arbitrary sizes — upgrade to 1200×1200
+    return hit.artworkUrl100.replace('100x100bb', '1200x1200bb');
+  } catch {
+    return null;
+  }
 }
 
 const TWEAK_DEFAULTS = {
@@ -87,6 +117,7 @@ function useSonos() {
   const selectedGroupRef      = useRef(null);  // locked group — survives pause/stop
   const volumeDebounce        = useRef(null);
   const playerVolumeDebounces = useRef({});
+  const artCacheRef           = useRef({});    // 'artist\0song' → url | 'loading' | 'none'
 
   const poll = useCallback(async () => {
     try {
@@ -114,17 +145,50 @@ function useSonos() {
       const rawTrack = item?.track;
       let track = null;
 
-      // Sonos often returns local-device URLs (http://192.168.x.x:1400/getaa...)
-      // for per-track artwork. These can't load on an HTTPS page (mixed-content /
-      // Private Network Access block). Skip them; container.imageUrl usually has
-      // the real CDN URL (Spotify, Apple Music, etc.).
-      // For each candidate, extract the real CDN URL from any local Sonos proxy URL.
+      // Artwork resolution — three levels of fallback:
+      //
+      //  1. Sonos imageUrl candidates: the cloud API can return x-sonos-http://
+      //     URLs (resolved to CDN) or local proxy URLs whose `u` param is a
+      //     streaming service URI (e.g. x-sonos-spotify:…) — not a CDN image.
+      //     _resolveCdnUrl handles CDN extractions; non-image URIs → null.
+      //
+      //  2. iTunes Search API fallback: when Sonos gives us a streaming URI
+      //     instead of an image URL, look up the art by artist + track name.
+      //     Result is cached per track so we only ever make one request.
+      //
+      //  3. vinyl mode: if still no art, show the spinning vinyl animation.
       const artCandidates = [
         rawTrack?.imageUrl,
         item?.imageUrl,
         meta?.container?.imageUrl,
       ].map(_resolveCdnUrl);
-      const resolvedArtUrl = artCandidates.find(Boolean) || '';
+      let resolvedArtUrl = artCandidates.find(Boolean) || '';
+
+      // iTunes fallback — only when Sonos gives us no loadable image URL
+      if (!resolvedArtUrl && rawTrack?.name) {
+        const artist = rawTrack.artist?.name || '';
+        const song   = rawTrack.name;
+        const cKey   = artist + '\x00' + song;
+        const cached = artCacheRef.current[cKey];
+
+        if (cached && cached !== 'loading' && cached !== 'none') {
+          resolvedArtUrl = cached;            // cache hit — use immediately
+        } else if (!cached) {
+          artCacheRef.current[cKey] = 'loading';
+          _fetchItunesArt(artist, song).then(url => {
+            artCacheRef.current[cKey] = url || 'none';
+            if (url) {
+              setData(d => {
+                // Only apply if the same track is still playing and has no art yet
+                if (!d.track) return d;
+                const dKey = (d.track.artist || '') + '\x00' + (d.track.song || '');
+                if (dKey !== cKey || d.track.artworkUrl) return d;
+                return { ...d, track: { ...d.track, artworkUrl: url }, vinyl: false };
+              });
+            }
+          }).catch(() => { artCacheRef.current[cKey] = 'none'; });
+        }
+      }
 
       if (rawTrack?.name) {
         // Try several fields the Sonos API might carry release year in
@@ -160,12 +224,15 @@ function useSonos() {
 
       const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
-      // Store raw values for on-screen debug inspection (tweaks panel "Show art URLs" button)
+      // Store raw values for on-screen debug inspection (⚙ → "Show art URLs")
+      const itunesKey = (rawTrack?.artist?.name || '') + '\x00' + (rawTrack?.name || '');
       window._sonosArtDebug = {
         trackRaw:     rawTrack?.imageUrl        || null,
         itemRaw:      item?.imageUrl            || null,
         containerRaw: meta?.container?.imageUrl || null,
-        candidates:   artCandidates,            // after _resolveCdnUrl
+        candidates:   artCandidates,
+        sonosResolved:artCandidates.find(Boolean) || null,
+        itunesStatus: artCacheRef.current[itunesKey] || 'not tried',
         resolved:     resolvedArtUrl            || null,
         vinylActive:  playing && (!track || !track.artworkUrl),
         song:         rawTrack?.name            || null,

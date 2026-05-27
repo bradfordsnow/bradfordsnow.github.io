@@ -151,6 +151,37 @@ function _bestArtUrl(meta, rawTrack, item) {
   return url ? _hiRes(url) : '';
 }
 
+// iTunes Search API fallback — resolves artwork when Sonos gives a streaming URI
+function _fetchItunesArt(artist, song) {
+  var q = encodeURIComponent([artist, song].filter(Boolean).join(' '));
+  return fetch('https://itunes.apple.com/search?term=' + q + '&media=music&entity=song&limit=5&country=us')
+    .then(function(r) { return r.ok ? r.json() : { results: [] }; })
+    .then(function(data) {
+      var results = data.results || [];
+      var sl = (song || '').toLowerCase();
+      var al = (artist || '').toLowerCase();
+      var hit = null;
+      for (var i = 0; i < results.length; i++) {
+        var r = results[i];
+        if (r.trackName && r.trackName.toLowerCase() === sl &&
+            r.artistName && r.artistName.toLowerCase().indexOf(al) >= 0) {
+          hit = r; break;
+        }
+      }
+      if (!hit) {
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].trackName && results[i].trackName.toLowerCase() === sl) {
+            hit = results[i]; break;
+          }
+        }
+      }
+      if (!hit && results.length) hit = results[0];
+      if (!hit || !hit.artworkUrl100) return null;
+      return hit.artworkUrl100.replace('100x100bb', '1200x1200bb');
+    })
+    .catch(function() { return null; });
+}
+
 // ─── Main app ──────────────────────────────────────────────────────────────
 
 var { useState, useEffect, useRef, useCallback } = React;
@@ -193,7 +224,8 @@ function ArtScreen() {
   var [error, setError]     = useState(null);
   var householdRef          = useRef(null);
   var selectedGroupRef      = useRef(null);
-  var pendingUrlRef         = useRef('');   // hi-res URL currently being fetched
+  var pendingUrlRef         = useRef('');   // URL currently displayed
+  var artCacheRef           = useRef({});   // 'artist\0song' → url | 'loading' | 'none'
 
   var poll = useCallback(function() {
     var hid;
@@ -211,6 +243,27 @@ function ArtScreen() {
       var item     = s.meta && s.meta.currentItem;
       var rawTrack = item && item.track;
       var url      = _bestArtUrl(s.meta, rawTrack, item);
+
+      // iTunes fallback when Sonos gives a streaming URI instead of an image URL
+      if (!url && rawTrack && rawTrack.name) {
+        var artist = (rawTrack.artist && rawTrack.artist.name) || '';
+        var song   = rawTrack.name;
+        var cKey   = artist + '\x00' + song;
+        var cached = artCacheRef.current[cKey];
+        if (cached && cached !== 'loading' && cached !== 'none') {
+          url = cached;
+        } else if (!cached) {
+          artCacheRef.current[cKey] = 'loading';
+          _fetchItunesArt(artist, song).then(function(itunesUrl) {
+            artCacheRef.current[cKey] = itunesUrl || 'none';
+            if (itunesUrl && pendingUrlRef.current !== itunesUrl) {
+              pendingUrlRef.current = itunesUrl;
+              setImgSrc(itunesUrl);
+            }
+          });
+        }
+      }
+
       if (url && url !== pendingUrlRef.current) {
         pendingUrlRef.current = url;
         setImgSrc(url);
