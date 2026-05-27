@@ -145,47 +145,59 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
 }
 
 // ─── Typographic atoms (unchanged) ────────────────────────────────────────
-// Song — scrolls the full title when it overflows maxWidth.
-// Uses CSS custom property --ssov (scroll overflow) + @keyframes spineScroll
-// defined in index.html. Hooks called unconditionally (React rules).
+// Song — renders a continuous marquee when text overflows maxWidth.
+// Two identical copies side-by-side scroll in one direction at constant speed.
+// @keyframes continuousScroll is defined in index.html.
+// Hooks always called (no conditional hook calls — React rules).
 function Song({ size, name, maxWidth }) {
   const { useRef, useEffect, useState } = React;
   const spanRef = useRef(null);
-  const [ov, setOv] = useState(0);
+  const [textW, setTextW] = useState(0);
 
   useEffect(() => {
-    if (!spanRef.current || maxWidth == null) { setOv(0); return; }
-    const excess = spanRef.current.scrollWidth - maxWidth;
-    setOv(excess > 10 ? excess : 0);
-  }, [name, maxWidth, size]);
+    if (!spanRef.current) return;
+    setTextW(spanRef.current.offsetWidth);
+  }, [name, size]);
 
   if (!name) return null;
 
-  const baseStyle = {
+  const GAP = 88;  // px gap between end of first copy and start of second
+  const shouldScroll = maxWidth != null && textW > 0 && textW > maxWidth + 10;
+
+  const textStyle = {
     fontFamily: '"Cormorant Garamond", serif',
     fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
     color: '#fff', display: 'inline-block',
-    whiteSpace: 'nowrap', paddingBottom: '0.15em',
+    whiteSpace: 'nowrap', paddingBottom: '0.15em', flexShrink: 0,
   };
 
   if (maxWidth != null) {
-    // Duration scales with overflow distance so slow titles don't rush
-    const dur = Math.round(ov / 28 + 5);
+    if (shouldScroll) {
+      const totalDist = textW + GAP;
+      // 48px/s — readable but steady
+      const dur = (totalDist / 48).toFixed(2);
+      return (
+        <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center',
+            '--ms-dist': `-${totalDist}px`,
+            animation: `continuousScroll ${dur}s linear infinite`,
+          }}>
+            <span ref={spanRef} style={{ ...textStyle, marginRight: GAP }}>{name}</span>
+            <span aria-hidden="true" style={textStyle}>{name}</span>
+          </div>
+        </div>
+      );
+    }
+    // Fits — just render with ref so we can measure on next track change
     return (
       <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
-        <span
-          ref={spanRef}
-          style={{
-            ...baseStyle,
-            '--ssov': ov > 0 ? `-${ov}px` : '0px',
-            animation: ov > 0 ? `spineScroll ${dur}s ease-in-out infinite` : 'none',
-          }}
-        >{name}</span>
+        <span ref={spanRef} style={textStyle}>{name}</span>
       </div>
     );
   }
 
-  return <span style={baseStyle}>{name}</span>;
+  return <span ref={spanRef} style={textStyle}>{name}</span>;
 }
 
 function ShazamMark({ scale }) {

@@ -56,6 +56,28 @@ async function _fetchItunesArt(artist, song) {
   }
 }
 
+// ─── Weather (Open-Meteo, free, no auth, CORS-enabled) ────────────────────
+// Coordinates: Los Angeles, CA. Temperatures in °F.
+async function _fetchWeather() {
+  try {
+    const r = await fetch(
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=34.05&longitude=-118.24' +
+      '&current=temperature_2m' +
+      '&daily=temperature_2m_max,temperature_2m_min' +
+      '&temperature_unit=fahrenheit&forecast_days=1' +
+      '&timezone=America%2FLos_Angeles'
+    );
+    if (!r.ok) return null;
+    const d = await r.json();
+    return {
+      current: Math.round(d.current.temperature_2m),
+      lo:      Math.round(d.daily.temperature_2m_min[0]),
+      hi:      Math.round(d.daily.temperature_2m_max[0]),
+    };
+  } catch { return null; }
+}
+
 // v2: default spineLines = 3 to show new two-zone layout
 const TWEAK_DEFAULTS = {
   device:      'ipad',
@@ -570,9 +592,18 @@ function deviceTypeScale(device) {
   return 1.0;
 }
 
-// ─── Clock — v2: font size doubled (24 → 48) ─────────────────────────────
+// ─── Clock widget — date / time / weather stacked ────────────────────────
+// Font: Josefin Sans — geometric with slightly classical character.
+// Date: "Wed Dec 24" small above. Time: large center. Weather: lo°  N°  hi° below.
+const _DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const _MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const _JF     = '"Josefin Sans", system-ui, sans-serif';
+
 function Clock({ scale = 1 }) {
-  const [time, setTime] = useState(new Date());
+  const [time,    setTime]    = useState(new Date());
+  const [weather, setWeather] = useState(null);
+
+  // Minute-accurate clock sync
   useEffect(() => {
     const sync = () => {
       const now = new Date();
@@ -584,18 +615,60 @@ function Clock({ scale = 1 }) {
     const t = setTimeout(() => { sync(); id = setInterval(sync, 60000); }, delay);
     return () => { clearTimeout(t); if (id) clearInterval(id); };
   }, []);
-  const h = time.getHours();
-  const m = time.getMinutes();
+
+  // Weather — fetch once then every 30 min
+  useEffect(() => {
+    _fetchWeather().then(w => { if (w) setWeather(w); });
+    const id = setInterval(() => {
+      _fetchWeather().then(w => { if (w) setWeather(w); });
+    }, 30 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const h    = time.getHours();
+  const m    = time.getMinutes();
   const hr12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const dateStr = `${_DAYS[time.getDay()]}  ${_MONTHS[time.getMonth()]} ${time.getDate()}`;
+
   return (
-    <div style={{
-      fontFamily: '"Cormorant Garamond", serif',
-      fontSize: 55 * scale,  // v2.2: 48 × 1.15
-      fontWeight: 400,
-      color: '#fff', letterSpacing: '0.08em',
-      whiteSpace: 'nowrap',
-    }}>
-      {hr12}:{String(m).padStart(2, '0')}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 * scale }}>
+
+      {/* Date */}
+      <div style={{
+        fontFamily: _JF, fontSize: 11 * scale, fontWeight: 300,
+        letterSpacing: '0.22em', textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.38)', whiteSpace: 'nowrap',
+      }}>{dateStr}</div>
+
+      {/* Time */}
+      <div style={{
+        fontFamily: _JF, fontSize: 55 * scale, fontWeight: 300,
+        letterSpacing: '0.06em', color: '#fff', whiteSpace: 'nowrap',
+        lineHeight: 1,
+      }}>{hr12}:{String(m).padStart(2, '0')}</div>
+
+      {/* Weather: lo 58°   72°   hi 85° */}
+      {weather && (
+        <div style={{
+          display: 'flex', alignItems: 'baseline', gap: 10 * scale,
+          fontFamily: _JF,
+        }}>
+          <span style={{
+            fontSize: 10 * scale, fontWeight: 300, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)',
+            whiteSpace: 'nowrap',
+          }}>lo {weather.lo}°</span>
+          <span style={{
+            fontSize: 28 * scale, fontWeight: 300, letterSpacing: '0.04em',
+            color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
+          }}>{weather.current}°</span>
+          <span style={{
+            fontSize: 10 * scale, fontWeight: 300, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)',
+            whiteSpace: 'nowrap',
+          }}>hi {weather.hi}°</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -619,9 +692,9 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
   const s = remaining % 60;
   return (
     <div style={{
-      fontFamily: '"Cormorant Garamond", serif',
+      fontFamily: _JF,
       fontSize: 36 * scale,   // v2: doubled from 18
-      fontWeight: 400,
+      fontWeight: 300,
       color: 'rgba(255,255,255,0.28)',  // v2: lifted from 0.22 (25% lighter)
       letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
     }}>
