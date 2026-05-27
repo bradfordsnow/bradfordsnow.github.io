@@ -109,8 +109,15 @@ function SpineThreeLines({ scale, track = {}, maxW = 0 }) {
   );
 }
 
-// ─── v1 one-line layout (unchanged) ───────────────────────────────────────
+// ─── One-line layout — artist · song (scrolling) · album (truncated) ────────
 function SpineOneLine({ scale, track = {}, maxW = 0 }) {
+  const ALBUM_MAX = 22;
+  const albumText = track.album
+    ? (track.album.length > ALBUM_MAX
+        ? track.album.slice(0, ALBUM_MAX - 1) + '…'
+        : track.album)
+    : null;
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'row', alignItems: 'baseline',
@@ -124,25 +131,75 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
         textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
       }}>{track.artist || 'Now Playing'}</span>
 
-      {track.song && (
-        <span style={{
-          flex: '1 1 0', minWidth: 0,
-          overflow: 'hidden', textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap', paddingBottom: '0.15em',
-          fontFamily: '"Cormorant Garamond", serif',
-          fontSize: 48 * scale, fontWeight: 500, letterSpacing: '-0.005em',
-          color: '#fff',
-        }}>{track.song}</span>
-      )}
+      {track.song && <SongFlex size={48 * scale} name={track.song} />}
 
-      {track.album && (
+      {albumText && (
         <span style={{
           flexShrink: 0, whiteSpace: 'nowrap',
           fontFamily: '"Cormorant Garamond", serif',
           fontSize: 24 * scale, fontStyle: 'italic', fontWeight: 400,
           color: 'rgba(255,255,255,0.52)',
-        }}>{track.album}{track.year ? ` - ${track.year}` : ''}</span>
+        }}>{albumText}{track.year ? ` – ${track.year}` : ''}</span>
       )}
+    </div>
+  );
+}
+
+// ─── SongFlex — scrolling song title within a flex container ─────────────
+// Sits at flex: 1 1 0 between artist (left) and album (right).
+// Measures the container width; if the text overflows, runs the same
+// continuous two-copy marquee as Song. ResizeObserver guard for old iOS.
+function SongFlex({ size, name }) {
+  const { useRef, useEffect, useState } = React;
+  const containerRef = useRef(null);
+  const textRef      = useRef(null);
+  const [textW,      setTextW]      = useState(0);
+  const [containerW, setContainerW] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) setContainerW(containerRef.current.offsetWidth);
+      if (textRef.current)      setTextW(textRef.current.offsetWidth);
+    };
+    update();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(update);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [name, size]);
+
+  if (!name) return null;
+
+  const GAP = 88;
+  const shouldScroll = containerW > 0 && textW > containerW + 10;
+
+  const textStyle = {
+    fontFamily: '"Cormorant Garamond", serif',
+    fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
+    color: '#fff', display: 'inline-block',
+    whiteSpace: 'nowrap', paddingBottom: '0.15em', flexShrink: 0,
+  };
+
+  if (shouldScroll) {
+    const totalDist = textW + GAP;
+    const dur = (totalDist / 48).toFixed(2);
+    return (
+      <div ref={containerRef} style={{ flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'baseline',
+          '--ms-dist': `-${totalDist}px`,
+          animation: `continuousScroll ${dur}s linear infinite`,
+        }}>
+          <span ref={textRef} style={{ ...textStyle, marginRight: GAP }}>{name}</span>
+          <span aria-hidden="true" style={textStyle}>{name}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} style={{ flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}>
+      <span ref={textRef} style={textStyle}>{name}</span>
     </div>
   );
 }

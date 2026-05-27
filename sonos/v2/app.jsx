@@ -78,13 +78,13 @@ async function _fetchWeather() {
   } catch { return null; }
 }
 
-// v2: default spineLines = 3 to show new two-zone layout
+// v2: default spineLines = 1 (one-line: artist · song · album)
 const TWEAK_DEFAULTS = {
   device:      'ipad',
   orientation: 'landscape',
   vinyl:       false,
   shazam:      false,
-  spineLines:  3,
+  spineLines:  1,
 };
 
 function useSonos() {
@@ -593,11 +593,11 @@ function deviceTypeScale(device) {
 }
 
 // ─── Clock widget — date / time / weather stacked ────────────────────────
-// Font: Josefin Sans — geometric with slightly classical character.
-// Date: "Wed Dec 24" small above. Time: large center. Weather: lo°  N°  hi° below.
+// Font: Plus Jakarta Sans — original v1 clock font, weight 500.
+// Date: "Wed Dec 24" above. Time: large center. Weather: lo°  N°  hi° below.
 const _DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const _MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const _JF     = '"Josefin Sans", system-ui, sans-serif';
+const _JF     = '"Plus Jakarta Sans", system-ui, sans-serif';
 
 function Clock({ scale = 1 }) {
   const [time,    setTime]    = useState(new Date());
@@ -633,17 +633,17 @@ function Clock({ scale = 1 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * scale }}>
 
-      {/* Date */}
+      {/* Date — Plus Jakarta Sans, matches artist style */}
       <div style={{
-        fontFamily: _JF, fontSize: 15 * scale, fontWeight: 300,
-        letterSpacing: '0.22em', textTransform: 'uppercase',
+        fontFamily: _JF, fontSize: 15 * scale, fontWeight: 500,
+        letterSpacing: '0.28em', textTransform: 'uppercase',
         color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
 
       {/* Time */}
       <div style={{
-        fontFamily: _JF, fontSize: 72 * scale, fontWeight: 300,
-        letterSpacing: '0.04em', color: '#fff', whiteSpace: 'nowrap',
+        fontFamily: _JF, fontSize: 72 * scale, fontWeight: 500,
+        letterSpacing: '0.1em', color: '#fff', whiteSpace: 'nowrap',
         lineHeight: 1,
       }}>{hr12}:{String(m).padStart(2, '0')}</div>
 
@@ -654,15 +654,15 @@ function Clock({ scale = 1 }) {
           fontFamily: _JF,
         }}>
           <span style={{
-            fontSize: 20 * scale, fontWeight: 300, letterSpacing: '0.08em',
+            fontSize: 20 * scale, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 38 * scale, fontWeight: 300, letterSpacing: '0.04em',
+            fontSize: 38 * scale, fontWeight: 500, letterSpacing: '0.1em',
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
-            fontSize: 20 * scale, fontWeight: 300, letterSpacing: '0.08em',
+            fontSize: 20 * scale, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.hi}°</span>
         </div>
@@ -692,7 +692,7 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
     <div style={{
       fontFamily: _JF,
       fontSize: 36 * scale,   // v2: doubled from 18
-      fontWeight: 300,
+      fontWeight: 500,
       color: 'rgba(255,255,255,0.28)',  // v2: lifted from 0.22 (25% lighter)
       letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
     }}>
