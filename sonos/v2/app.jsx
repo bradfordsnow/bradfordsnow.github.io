@@ -158,7 +158,7 @@ function useSonos() {
                 if (!d.track) return d;
                 const dKey = (d.track.artist || '') + '\x00' + (d.track.song || '');
                 if (dKey !== cKey || d.track.artworkUrl) return d;
-                return { ...d, track: { ...d.track, artworkUrl: url }, vinyl: false };
+                return { ...d, track: { ...d.track, artworkUrl: url } };
               });
             }
           }).catch(() => { artCacheRef.current[cKey] = 'none'; });
@@ -213,6 +213,12 @@ function useSonos() {
       };
       console.log('[Sonos v2] artwork:', window._sonosArtDebug);
 
+      // Vinyl/record-player only for actual line-in sources.
+      // Sonos line-in container IDs start with x-rincon-stream: (analog)
+      // or x-sonos-htastream: (TV/HDMI ARC).
+      const containerId = meta?.container?.id || '';
+      const isLineIn = /^x-rincon-stream:|^x-sonos-htastream:/i.test(containerId);
+
       setData(d => ({
         ...d,
         loading:       false,
@@ -225,7 +231,7 @@ function useSonos() {
         track,
         positionSecs:  posSecs,
         volume:        vol?.volume ?? d.volume,
-        vinyl:         playing && (!track || !track.artworkUrl),
+        vinyl:         playing && isLineIn,
       }));
     } catch (err) {
       console.warn('Sonos poll error:', err.message);

@@ -127,7 +127,7 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
       <span style={{
         flexShrink: 0, whiteSpace: 'nowrap',
         fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-        fontSize: 30 * scale, fontWeight: 500, letterSpacing: '0.28em',
+        fontSize: 26 * scale, fontWeight: 500, letterSpacing: '0.28em',
         textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
       }}>{track.artist || 'Now Playing'}</span>
 
