@@ -642,19 +642,21 @@ function Clock({ scale = 1, sideW = 0 }) {
   const dayStr  = _DAYS[time.getDay()];
   const dateStr = `${_MONTHS[time.getMonth()]} ${time.getDate()}`;
 
-  const _dateStyle = {
-    fontFamily: _JF, fontSize: 21 * cs, fontWeight: 500,
-    letterSpacing: '0.28em', textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 * cs }}>
 
-      {/* Date — stacked: WED above MAY 27 */}
+      {/* Date — stacked: WED (small) above MAY 27 (larger) */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 * cs }}>
-        <div style={_dateStyle}>{dayStr}</div>
-        <div style={_dateStyle}>{dateStr}</div>
+        <div style={{
+          fontFamily: _JF, fontSize: 16 * cs, fontWeight: 500,
+          letterSpacing: '0.28em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
+        }}>{dayStr}</div>
+        <div style={{
+          fontFamily: _JF, fontSize: 26 * cs, fontWeight: 500,
+          letterSpacing: '0.28em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
+        }}>{dateStr}</div>
       </div>
 
       {/* Time — two-line: hour / minutes, no separator */}
