@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sonos UI Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #080808; color: #fff;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 36px; font-weight: 400; letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.9); margin: 0 0 8px;
+  }
+  .page-sub {
+    font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.3); margin-bottom: 64px;
+  }
+
+  .section-title {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.25); margin: 0 0 32px;
+    padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .section { margin-bottom: 80px; }
+
+  /* ── Option cards ── */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: #111;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+    cursor: default;
+  }
+  .card-label {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .card-label .n {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.25);
+  }
+  .card-label .name {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: rgba(255,255,255,0.55);
+  }
+  .card-demo { padding: 24px 16px; min-height: 180px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Spine strip shared ── */
+  .spine-strip {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    background: #000;
+    height: 140px; width: 72px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+    border-radius: 4px;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
+  .spine-strip.wide { width: 110px; }
+
+  .t-artist {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 8px; font-weight: 500; letter-spacing: 0.22em;
+    text-transform: uppercase; color: rgba(255,255,255,0.75);
+    white-space: nowrap;
+  }
+  .t-song {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 22px; font-weight: 500; letter-spacing: -0.005em;
+    color: #fff; white-space: nowrap;
+  }
+  .t-album {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 11px; font-style: italic; font-weight: 400;
+    color: rgba(255,255,255,0.45); white-space: nowrap;
+  }
+  .t-year {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 7px; letter-spacing: 0.28em;
+    color: rgba(255,255,255,0.35); white-space: nowrap;
+  }
+
+  /* ── Controls shared ── */
+  .controls-row {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .ctrl-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; color: #fff;
+  }
+  .ctrl-btn svg { display: block; }
+
+  /* Spine option 1 – 2-line wrap */
+  .opt1-song {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 20px; font-weight: 500;
+    color: #fff; line-height: 1.1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    writing-mode: horizontal-tb;
+    transform: none;
+    max-height: 44px;
+    text-align: center;
+  }
+  .spine-strip.opt1-inner {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    gap: 6px; width: 92px; height: 140px;
+    align-items: center; justify-content: center;
+  }
+  .opt1-inner .t-song {
+    /* re-enter horizontal in vertical context using a trick:
+       wrap in a fixed-width rotated container */
+    font-size: 18px;
+    white-space: normal;
+    word-break: break-word;
+    display: block;
+    max-height: 56px;
+    overflow: hidden;
+  }
+
+  /* Spine option 2 – fade-out mask */
+  .opt2-song-wrap {
+    position: relative;
+    max-width: 108px; overflow: hidden;
+    flex-shrink: 0;
+  }
+  .opt2-song-wrap .t-song { font-size: 22px; }
+  .opt2-song-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, #000);
+    pointer-events: none;
+  }
+
+  /* Spine option 3 – marquee scroll */
+  .opt3-marquee-clip {
+    overflow: hidden;
+    max-width: 108px;
+    position: relative;
+  }
+  .opt3-marquee-inner {
+    display: inline-block;
+    animation: marquee 6s linear infinite;
+    padding-right: 40px;
+    white-space: nowrap;
+  }
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    40%  { transform: translateX(0); }
+    85%  { transform: translateX(-100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  /* Spine option 4 – scale to fit */
+  .opt4-song {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 500; color: #fff;
+    white-space: nowrap;
+    font-size: 13px; /* scaled down for long title */
+    letter-spacing: -0.005em;
+  }
+
+  /* Spine option 5 – truncate at subtitle boundary */
+  .opt5-song {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 22px; font-weight: 500;
+    color: #fff; white-space: nowrap;
+  }
+  .opt5-sub {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 11px; font-style: italic;
+    color: rgba(255,255,255,0.45); white-space: nowrap;
+  }
+
+  /* ───────────────────────────────────────────
+     CONTROLS OPTIONS
+  ─────────────────────────────────────────── */
+
+  .ctrl-card-demo {
+    width: 100%; min-height: 180px;
+    padding: 24px 20px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    position: relative;
+    background: #000;
+    border-radius: 0 0 7px 7px;
+    overflow: hidden;
+  }
+
+  .fake-art {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1a0a2e 0%, #0d1117 50%, #0a1a0d 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fake-art-inner {
+    width: 100px; height: 100px;
+    background: linear-gradient(145deg, #2d1b69, #11233c, #1a3a1a);
+    border-radius: 3px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fake-art-inner svg { opacity: 0.3; }
+
+  /* Option C1 – Ghost dim, hover brighten */
+  .c1-controls {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 24px;
+    opacity: 0.12;
+    transition: opacity 0.4s ease;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 40px;
+    backdrop-filter: blur(8px);
+  }
+  .c1-controls:hover { opacity: 1; }
+  .c1-label {
+    position: relative; z-index: 2;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.25); margin-top: 8px;
+  }
+
+  /* Option C2 – Auto-hide slide out */
+  .c2-wrap {
+    position: relative; z-index: 2; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .c2-controls {
+    display: flex; align-items: center; gap: 24px;
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 40px;
+    backdrop-filter: blur(8px);
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s ease;
+    transform: translateY(0px); opacity: 1;
+  }
+  .c2-controls.hidden {
+    transform: translateY(48px); opacity: 0;
+  }
+  .c2-tap-hint {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.22); margin-top: 8px;
+    transition: opacity 0.4s;
+  }
+  .c2-tap-hint.visible { opacity: 1; }
+  .c2-tap-hint.hidden  { opacity: 0; }
+  .c2-demo-area {
+    position: absolute; inset: 0; z-index: 3; cursor: pointer;
+  }
+
+  /* Option C3 – Progress-only, expand on tap */
+  .c3-bar-wrap {
+    position: relative; z-index: 2; width: 90%;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .c3-progress-track {
+    width: 100%; height: 2px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 1px; cursor: pointer; position: relative;
+    transition: height 0.3s ease;
+  }
+  .c3-progress-track:hover { height: 4px; }
+  .c3-progress-fill {
+    height: 100%; width: 42%; border-radius: 1px;
+    background: rgba(255,255,255,0.7);
+  }
+  .c3-full {
+    display: flex; align-items: center; gap: 22px;
+    overflow: hidden; max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
+    opacity: 0;
+  }
+  .c3-full.open { max-height: 60px; opacity: 1; }
+  .c3-hint {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.22); margin-top: 2px;
+  }
+
+  /* Option C4 – Dot indicators, bloom on touch */
+  .c4-dots {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 18px;
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+  .c4-dots.expanded { gap: 22px; }
+  .c4-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    flex-shrink: 0;
+  }
+  .c4-dots.expanded .c4-dot { opacity: 0; width: 0; margin: 0; }
+  .c4-btn-wrap {
+    overflow: hidden; max-width: 0;
+    transition: max-width 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    opacity: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .c4-dots.expanded .c4-btn-wrap { max-width: 40px; opacity: 1; }
+  .c4-hint {
+    position: relative; z-index: 2;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.22); margin-top: 10px;
+  }
+
+  /* Option C5 – Proximity / tilt reveal (simulated by mouse position) */
+  .c5-controls {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 24px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 40px;
+    transition: background 0.4s ease, border-color 0.4s ease,
+                box-shadow 0.4s ease, opacity 0.4s ease;
+    opacity: 0.18;
+  }
+  .c5-controls:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.55);
+    border-color: rgba(255,255,255,0.15);
+    box-shadow: 0 0 24px rgba(255,255,255,0.06), inset 0 0 0 0 transparent;
+    backdrop-filter: blur(12px);
+  }
+  .c5-hint {
+    position: relative; z-index: 2;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.22); margin-top: 8px;
+  }
+
+  /* ── SVG icon helpers ── */
+  .icon-play   { width: 20px; height: 20px; }
+  .icon-small  { width: 16px; height: 16px; }
+  .icon-dim    { opacity: 0.55; }
+
+  /* ── Spine demo wrapper for horizontal layout ── */
+  .spine-demo {
+    display: flex; align-items: stretch; gap: 2px;
+    height: 140px; border-radius: 4px; overflow: hidden;
+  }
+  .cover-stub {
+    width: 56px; height: 140px;
+    background: linear-gradient(145deg, #2d1b69, #11233c);
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+
+  .note {
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    letter-spacing: 0.03em; margin-top: 32px;
+    max-width: 560px; line-height: 1.7;
+  }
+
+  /* Subtle divider */
+  .divider {
+    height: 1px; background: rgba(255,255,255,0.05); margin: 72px 0;
+  }
+
+  /* card hover */
+  .card { transition: border-color 0.2s; }
+  .card:hover { border-color: rgba(255,255,255,0.14); }
+
+  /* Long title demo text */
+  .long-title { font-size: 22px; }
+  .very-long { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Sonos UI — Visual Options</h1>
+  <p class="page-sub">Mockup exploration &nbsp;·&nbsp; Bradford Snow &nbsp;·&nbsp; 2026</p>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 1 — SPINE LONG TITLES
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <p class="section-title">01 &nbsp;—&nbsp; Spine &amp; Long Titles</p>
+    <div class="options-grid">
+
+      <!-- ── S1: Two-line wrap ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">S–1</span>
+          <span class="name">Two-line song title</span>
+        </div>
+        <div class="card-demo">
+          <div class="spine-demo">
+            <div class="cover-stub"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:96px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:7px; padding:8px 6px; overflow:hidden;">
+              <span class="t-artist">The Beatles</span>
+              <!-- Two-line: we rotate a small block back to horizontal -->
+              <div style="writing-mode:horizontal-tb; transform:none;
+                          font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:500;
+                          color:#fff; line-height:1.15; text-align:center; max-height:42px;
+                          overflow:hidden; display:-webkit-box; -webkit-line-clamp:2;
+                          -webkit-box-orient:vertical; width:80px; letter-spacing:-0.005em;">
+                Baby, You're A Rich Man Remastered
+              </div>
+              <span class="t-album" style="font-size:9px;">Magical Mystery Tour</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── S2: Fade-out edge ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">S–2</span>
+          <span class="name">Fade at edge</span>
+        </div>
+        <div class="card-demo">
+          <div class="spine-demo">
+            <div class="cover-stub"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:80px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:7px; overflow:hidden;
+                        position:relative; padding:8px 0;">
+              <span class="t-artist">The Beatles</span>
+              <!-- fade mask applied on the inner span -->
+              <div style="position:relative; overflow:hidden; max-height:28px; flex-shrink:0;">
+                <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:500;
+                             color:#fff; white-space:nowrap; letter-spacing:-0.005em;">
+                  Baby, You're A Rich Man Remastered
+                </span>
+                <!-- fade in writing-mode context = bottom edge fades -->
+                <div style="position:absolute;top:0;right:0;bottom:0;width:28px;
+                            background:linear-gradient(to right, transparent, #000);"></div>
+              </div>
+              <span class="t-album" style="font-size:9px;">Magical Mystery Tour</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── S3: Marquee scroll ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">S–3</span>
+          <span class="name">Slow scroll</span>
+        </div>
+        <div class="card-demo">
+          <div class="spine-demo">
+            <div class="cover-stub"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:80px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:7px; overflow:hidden;
+                        padding:8px 0;">
+              <span class="t-artist">The Beatles</span>
+              <div style="overflow:hidden; max-height:28px; flex-shrink:0; position:relative;">
+                <div style="display:inline-block; animation:marquee 7s linear infinite;
+                            padding-right:48px; white-space:nowrap;">
+                  <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:500;
+                               color:#fff; letter-spacing:-0.005em;">
+                    Baby, You're A Rich Man Remastered
+                  </span>
+                </div>
+              </div>
+              <span class="t-album" style="font-size:9px;">Magical Mystery Tour</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── S4: Scale to fit ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">S–4</span>
+          <span class="name">Scale to fit</span>
+        </div>
+        <div class="card-demo" style="flex-direction:column; gap:20px;">
+          <!-- Short title at full size -->
+          <div class="spine-demo">
+            <div class="cover-stub" style="background:linear-gradient(145deg,#2d1b69,#11233c);"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:80px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:7px; overflow:hidden;
+                        padding:8px 0;">
+              <span class="t-artist" style="font-size:8px;">Radiohead</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:500;
+                           color:#fff; white-space:nowrap; letter-spacing:-0.005em;">Creep</span>
+              <span class="t-album" style="font-size:9px;">Pablo Honey</span>
+            </div>
+          </div>
+          <!-- Long title at reduced size -->
+          <div class="spine-demo">
+            <div class="cover-stub" style="background:linear-gradient(145deg,#0d1117,#1a3a1a);"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:80px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:7px; overflow:hidden;
+                        padding:8px 0;">
+              <span class="t-artist" style="font-size:7px;">The Beatles</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:13px; font-weight:500;
+                           color:#fff; white-space:nowrap; letter-spacing:-0.005em;">Baby, You're A Rich Man Remastered</span>
+              <span class="t-album" style="font-size:8px;">Magical Mystery Tour</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── S5: Main title + subtitle split ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">S–5</span>
+          <span class="name">Split main / subtitle</span>
+        </div>
+        <div class="card-demo">
+          <div class="spine-demo">
+            <div class="cover-stub"></div>
+            <div style="writing-mode:vertical-rl; transform:rotate(180deg); background:#000;
+                        width:92px; height:140px; display:flex; flex-direction:column;
+                        align-items:center; justify-content:center; gap:5px; overflow:hidden;
+                        padding:8px 4px;">
+              <span class="t-artist">The Beatles</span>
+              <!-- Primary title — large -->
+              <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:500;
+                           color:#fff; white-space:nowrap; letter-spacing:-0.005em;">
+                Baby, You're A Rich Man
+              </span>
+              <!-- Subtitle / version — small italic, dimmed -->
+              <span style="font-family:'Cormorant Garamond',serif; font-size:11px; font-style:italic;
+                           color:rgba(255,255,255,0.38); white-space:nowrap;">
+                Remastered 2009
+              </span>
+              <span class="t-album" style="font-size:9px;">Magical Mystery Tour</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="note">
+      S-1 through S-5 above. S-5 (split) pairs well with the common "Title - Remastered" or "Title (Live)" pattern — the main title stays large and legible while the qualifier shrinks and dims. S-3 (scroll) feels most "alive" as a screen. S-4 (scale) is the most mechanical but always fits.
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 2 — PLAYBACK CONTROLS
+  ════════════════════════════════════════════ -->
+  <div class="section">
+    <p class="section-title">02 &nbsp;—&nbsp; Playback Controls — Dynamic Visibility</p>
+
+    <div class="options-grid">
+
+      <!-- ── C1: Ghost dim, hover to reveal ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">C–1</span>
+          <span class="name">Ghost / hover reveal</span>
+        </div>
+        <div class="ctrl-card-demo">
+          <div class="fake-art">
+            <div class="fake-art-inner">
+              <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18V5l12-2v13" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="6" cy="18" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/><circle cx="18" cy="16" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="c1-controls" title="Hover to reveal">
+            <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M19 20L5 12l14-8v16Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            <button class="ctrl-btn"><svg class="icon-play" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="3" height="14" rx="1" fill="#fff"/><rect x="15" y="5" width="3" height="14" rx="1" fill="#fff"/></svg></button>
+            <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M5 4l14 8-14 8V4Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+          </div>
+          <span class="c1-label">hover to reveal</span>
+        </div>
+      </div>
+
+      <!-- ── C2: Auto-hide, tap anywhere to show ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">C–2</span>
+          <span class="name">Auto-hide, tap to show</span>
+        </div>
+        <div class="ctrl-card-demo" id="c2-demo">
+          <div class="fake-art">
+            <div class="fake-art-inner">
+              <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18V5l12-2v13" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="6" cy="18" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/><circle cx="18" cy="16" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="c2-demo-area" id="c2-tap-area"></div>
+          <div class="c2-wrap">
+            <div class="c2-controls hidden" id="c2-controls">
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M19 20L5 12l14-8v16Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+              <button class="ctrl-btn"><svg class="icon-play" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4Z" fill="#fff"/></svg></button>
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M5 4l14 8-14 8V4Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            </div>
+            <span class="c2-tap-hint visible" id="c2-hint">tap to show controls</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── C3: Progress bar only, expand on tap ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">C–3</span>
+          <span class="name">Progress-only, expand</span>
+        </div>
+        <div class="ctrl-card-demo" id="c3-demo">
+          <div class="fake-art">
+            <div class="fake-art-inner">
+              <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18V5l12-2v13" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="6" cy="18" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/><circle cx="18" cy="16" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="c3-bar-wrap">
+            <div class="c3-full" id="c3-full">
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M19 20L5 12l14-8v16Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+              <button class="ctrl-btn"><svg class="icon-play" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="3" height="14" rx="1" fill="#fff"/><rect x="15" y="5" width="3" height="14" rx="1" fill="#fff"/></svg></button>
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M5 4l14 8-14 8V4Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            </div>
+            <div class="c3-progress-track" id="c3-bar" title="tap to expand">
+              <div class="c3-progress-fill"></div>
+            </div>
+            <span class="c3-hint">tap bar to expand</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── C4: Dot indicators, bloom on tap ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">C–4</span>
+          <span class="name">Dots bloom to buttons</span>
+        </div>
+        <div class="ctrl-card-demo">
+          <div class="fake-art">
+            <div class="fake-art-inner">
+              <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18V5l12-2v13" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="6" cy="18" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/><circle cx="18" cy="16" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="c4-dots" id="c4-dots" title="tap to expand">
+            <!-- prev -->
+            <div class="c4-btn-wrap">
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M19 20L5 12l14-8v16Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            </div>
+            <div class="c4-dot"></div>
+            <!-- play -->
+            <div class="c4-btn-wrap" style="max-width:0;">
+              <button class="ctrl-btn"><svg class="icon-play" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="3" height="14" rx="1" fill="#fff"/><rect x="15" y="5" width="3" height="14" rx="1" fill="#fff"/></svg></button>
+            </div>
+            <div class="c4-dot" style="width:8px;height:8px;background:rgba(255,255,255,0.55);"></div>
+            <!-- next -->
+            <div class="c4-btn-wrap" style="max-width:0;">
+              <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M5 4l14 8-14 8V4Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            </div>
+            <div class="c4-dot"></div>
+          </div>
+          <span class="c4-hint" id="c4-hint">tap to expand</span>
+        </div>
+      </div>
+
+      <!-- ── C5: Proximity / cursor-near reveal ── -->
+      <div class="card">
+        <div class="card-label">
+          <span class="n">C–5</span>
+          <span class="name">Proximity reveal</span>
+        </div>
+        <div class="ctrl-card-demo">
+          <div class="fake-art">
+            <div class="fake-art-inner">
+              <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18V5l12-2v13" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="6" cy="18" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/><circle cx="18" cy="16" r="3" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="c5-controls" id="c5-controls" title="hover near to reveal">
+            <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M19 20L5 12l14-8v16Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+            <button class="ctrl-btn"><svg class="icon-play" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="3" height="14" rx="1" fill="#fff"/><rect x="15" y="5" width="3" height="14" rx="1" fill="#fff"/></svg></button>
+            <button class="ctrl-btn"><svg class="icon-small icon-dim" viewBox="0 0 24 24" fill="none"><path d="M5 4l14 8-14 8V4Z" stroke="#fff" stroke-width="1.5" fill="#fff" opacity="0.7"/></svg></button>
+          </div>
+          <span class="c5-hint">hover near to reveal</span>
+        </div>
+      </div>
+
+    </div>
+    <p class="note">
+      C-1 (ghost) and C-5 (proximity) are natural for mouse use; C-2 (auto-hide) and C-3 (progress-only) feel most at home on iPad where touch is the primary gesture. C-4 (dots bloom) is the most minimalist at rest and most satisfying as an interaction — three dots become three buttons.
+    </p>
+  </div>
+
+</div>
+
+<script>
+// ─── C2: tap to toggle ───────────────────────────
+var c2Controls = document.getElementById('c2-controls');
+var c2Hint     = document.getElementById('c2-hint');
+var c2Tap      = document.getElementById('c2-tap-area');
+var c2Timer    = null;
+
+function c2Show() {
+  c2Controls.classList.remove('hidden');
+  c2Hint.className = 'c2-tap-hint hidden';
+  clearTimeout(c2Timer);
+  c2Timer = setTimeout(c2Hide, 3000);
+}
+function c2Hide() {
+  c2Controls.classList.add('hidden');
+  c2Hint.className = 'c2-tap-hint visible';
+}
+c2Tap.addEventListener('click', function() {
+  if (c2Controls.classList.contains('hidden')) c2Show(); else c2Hide();
+});
+
+// ─── C3: tap progress bar to expand/collapse ─────
+var c3Bar  = document.getElementById('c3-bar');
+var c3Full = document.getElementById('c3-full');
+var c3Open = false;
+c3Bar.addEventListener('click', function() {
+  c3Open = !c3Open;
+  if (c3Open) c3Full.classList.add('open'); else c3Full.classList.remove('open');
+});
+
+// ─── C4: tap dots to bloom/collapse ──────────────
+var c4Dots = document.getElementById('c4-dots');
+var c4Hint = document.getElementById('c4-hint');
+var c4Expanded = false;
+c4Dots.addEventListener('click', function() {
+  c4Expanded = !c4Expanded;
+  if (c4Expanded) {
+    c4Dots.classList.add('expanded');
+    // unlock all btn wraps
+    var wraps = c4Dots.querySelectorAll('.c4-btn-wrap');
+    wraps.forEach(function(w) { w.style.maxWidth = '40px'; w.style.opacity = '1'; });
+    c4Hint.textContent = 'tap to collapse';
+  } else {
+    c4Dots.classList.remove('expanded');
+    var wraps = c4Dots.querySelectorAll('.c4-btn-wrap');
+    wraps.forEach(function(w) { w.style.maxWidth = '0'; w.style.opacity = '0'; });
+    c4Hint.textContent = 'tap to expand';
+  }
+});
+
+// ─── C5: proximity via mousemove on parent card ──
+var c5Card = document.getElementById('c5-controls').closest('.ctrl-card-demo');
+var c5El   = document.getElementById('c5-controls');
+c5Card.addEventListener('mousemove', function(e) {
+  var rect = c5El.getBoundingClientRect();
+  var cx = rect.left + rect.width/2;
+  var cy = rect.top  + rect.height/2;
+  var dx = e.clientX - cx;
+  var dy = e.clientY - cy;
+  var dist = Math.sqrt(dx*dx + dy*dy);
+  var maxDist = 100;
+  var alpha = Math.max(0, 1 - dist/maxDist);
+  c5El.style.opacity = 0.1 + alpha * 0.9;
+});
+c5Card.addEventListener('mouseleave', function() {
+  c5El.style.opacity = '0.18';
+});
+</script>
+</body>
+</html>
