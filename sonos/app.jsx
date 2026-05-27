@@ -138,12 +138,18 @@ function useSonos() {
 
       const mappedPlayers = (players || []).map(p => ({ id: p.id, name: p.name }));
 
-      console.log('[Sonos] artwork:', {
-        track:     rawTrack?.imageUrl        || '—',
-        item:      item?.imageUrl            || '—',
-        container: meta?.container?.imageUrl || '—',
-        resolved:  track?.artworkUrl         || 'NONE (all local or missing)',
-      });
+      // Store raw values for on-screen debug inspection (tweaks panel "Show art URLs" button)
+      window._sonosArtDebug = {
+        trackRaw:     rawTrack?.imageUrl        || null,
+        itemRaw:      item?.imageUrl            || null,
+        containerRaw: meta?.container?.imageUrl || null,
+        candidates:   artCandidates,            // after _resolveCdnUrl
+        resolved:     resolvedArtUrl            || null,
+        vinylActive:  playing && (!track || !track.artworkUrl),
+        song:         rawTrack?.name            || null,
+        ts:           new Date().toISOString(),
+      };
+      console.log('[Sonos] artwork:', window._sonosArtDebug);
 
       setData(d => ({
         ...d,
@@ -579,6 +585,21 @@ function App() {
                      onChange={v => setTweak('vinyl', v)} />
         <TweakToggle label="Identify via Shazam" value={t.shazam}
                      onChange={v => setTweak('shazam', v)} />
+        <TweakSection label="Art Debug" />
+        <TweakButton label="Show art URLs" onClick={() => {
+          const d = window._sonosArtDebug;
+          if (!d) { alert('No data yet — wait for the next poll (4s)'); return; }
+          const shorten = (s) => s ? (s.length > 90 ? s.slice(0, 90) + '…' : s) : '—';
+          alert(
+            'Song: ' + (d.song || '—') + '\n' +
+            'Time: ' + d.ts + '\n\n' +
+            'TRACK imageUrl:\n' + shorten(d.trackRaw) + '\n\n' +
+            'ITEM  imageUrl:\n' + shorten(d.itemRaw) + '\n\n' +
+            'CONTAINER imageUrl:\n' + shorten(d.containerRaw) + '\n\n' +
+            'RESOLVED (→ AlbumArt):\n' + shorten(d.resolved) + '\n\n' +
+            'Vinyl mode: ' + (d.vinylActive ? 'YES (no art URL)' : 'no')
+          );
+        }} />
         <TweakSection label="Account" />
         <TweakButton label="Sign out" onClick={() => {
           SonosAPI.logout();
