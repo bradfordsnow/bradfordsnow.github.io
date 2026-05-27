@@ -639,17 +639,23 @@ function Clock({ scale = 1, sideW = 0 }) {
   const h    = time.getHours();
   const m    = time.getMinutes();
   const hr12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  const dateStr = `${_DAYS[time.getDay()]}  ${_MONTHS[time.getMonth()]} ${time.getDate()}`;
+  const dayStr  = _DAYS[time.getDay()];
+  const dateStr = `${_MONTHS[time.getMonth()]} ${time.getDate()}`;
+
+  const _dateStyle = {
+    fontFamily: _JF, fontSize: 21 * cs, fontWeight: 500,
+    letterSpacing: '0.28em', textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 * cs }}>
 
-      {/* Date — Plus Jakarta Sans, matches artist style */}
-      <div style={{
-        fontFamily: _JF, fontSize: 21 * cs, fontWeight: 500,
-        letterSpacing: '0.28em', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
-      }}>{dateStr}</div>
+      {/* Date — stacked: WED above MAY 27 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 * cs }}>
+        <div style={_dateStyle}>{dayStr}</div>
+        <div style={_dateStyle}>{dateStr}</div>
+      </div>
 
       {/* Time — two-line: hour / minutes, no separator */}
       <div style={{
@@ -671,15 +677,15 @@ function Clock({ scale = 1, sideW = 0 }) {
           fontFamily: _JF, marginTop: 10 * cs,
         }}>
           <span style={{
-            fontSize: 25 * cs, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 19 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 48 * cs, fontWeight: 500, letterSpacing: 0,
+            fontSize: 40 * cs, fontWeight: 500, letterSpacing: 0,
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
-            fontSize: 25 * cs, fontWeight: 500, letterSpacing: '0.08em',
+            fontSize: 19 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.hi}°</span>
         </div>

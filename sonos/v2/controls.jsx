@@ -48,10 +48,10 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
         position: 'relative',
       }}
     >
-      {/* Playback icons — glass pill, center */}
+      {/* Playback icons — glass pill */}
       <div style={{
         position: 'absolute',
-        top: '50%', left: '50%',
+        top: '56%', left: '50%',
         transform: 'translate(-50%, -50%)',
       }}>
         {!vinyl && (
@@ -59,7 +59,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center',
             gap: 2 * scale,
-            padding: `${4 * scale}px 0`,
+            padding: `${9 * scale}px 0`,
             background: 'rgba(255,255,255,0.055)',
             backdropFilter: 'blur(24px) saturate(160%)',
             WebkitBackdropFilter: 'blur(24px) saturate(160%)',
@@ -73,21 +73,21 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
           }}>
             <ControlButton
               onClick={() => handlePress('back', onSkipBack)}
-              label="Previous track" size={48 * scale} color={getColor('back')}
+              label="Previous track" size={44 * scale} color={getColor('back')}
             >
-              <IconSkipBack size={32 * scale} />
+              <IconSkipBack size={28 * scale} />
             </ControlButton>
             <ControlButton
               onClick={() => handlePress('pause', onPause)}
-              size={72 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
+              size={62 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
             >
-              {paused ? <IconPlay size={42 * scale} /> : <IconPause size={38 * scale} />}
+              {paused ? <IconPlay size={36 * scale} /> : <IconPause size={33 * scale} />}
             </ControlButton>
             <ControlButton
               onClick={() => handlePress('forward', onSkipForward)}
-              label="Next track" size={48 * scale} color={getColor('forward')}
+              label="Next track" size={44 * scale} color={getColor('forward')}
             >
-              <IconSkipForward size={32 * scale} />
+              <IconSkipForward size={28 * scale} />
             </ControlButton>
           </div>
         )}
