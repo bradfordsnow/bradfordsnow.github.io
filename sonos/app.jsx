@@ -648,8 +648,7 @@ function App() {
       )}
       {framed}
 
-      {/* Gear button — opens the tweaks/settings panel from the real device.
-          Positioned bottom-left so it doesn't overlap the TweaksPanel (bottom-right). */}
+      {/* Gear button — uncomment to show a ⚙ trigger for the tweaks panel on real devices
       <button
         onClick={() => window.postMessage({ type: '__activate_edit_mode' }, '*')}
         style={{
@@ -663,6 +662,7 @@ function App() {
         }}
         title="Settings"
       >⚙</button>
+      */}
 
       <TweaksPanel title="Sonos Player">
         <TweakSection label="Device" />
