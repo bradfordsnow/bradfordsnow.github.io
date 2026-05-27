@@ -590,7 +590,7 @@ function Clock({ scale = 1 }) {
   return (
     <div style={{
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-      fontSize: 48 * scale,  // v2: doubled from 24
+      fontSize: 55 * scale,  // v2.2: 48 × 1.15
       fontWeight: 500,
       color: '#fff', letterSpacing: '0.1em',
       textTransform: 'uppercase', whiteSpace: 'nowrap',

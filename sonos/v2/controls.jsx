@@ -33,9 +33,9 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
     pressTimer.current = setTimeout(() => setLastPressed(null), 5000);
   };
 
-  // v2: inactive lifted from 0.22 → 0.28
+  // v2.2: inactive lifted another 20% → 0.34
   const getColor = (id) => {
-    if (!active) return 'rgba(255,255,255,0.28)';
+    if (!active) return 'rgba(255,255,255,0.34)';
     if (lastPressed === id) return '#fff';
     return 'rgba(255,255,255,0.55)';
   };
@@ -48,25 +48,35 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
         position: 'relative',
       }}
     >
-      {/* Playback icons — slightly above center */}
+      {/* Playback icons — glass pill, slightly above center */}
       <div style={{
         position: 'absolute',
         top: '43%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center',
-        gap: 28 * scale,
       }}>
         {!vinyl && (
-          <>
-            {/* v2: hitbox 80, icon 52 (≈2× original 26) */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center',
+            gap: 8 * scale,
+            padding: `${16 * scale}px ${18 * scale}px`,
+            background: 'rgba(255,255,255,0.055)',
+            backdropFilter: 'blur(24px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+            border: '0.5px solid rgba(255,255,255,0.10)',
+            borderRadius: 999,
+            boxShadow: [
+              'inset 0 1px 0 rgba(255,255,255,0.07)',
+              'inset 0 -1px 0 rgba(0,0,0,0.15)',
+              '0 8px 32px rgba(0,0,0,0.4)',
+            ].join(', '),
+          }}>
             <ControlButton
               onClick={() => handlePress('back', onSkipBack)}
               label="Previous track" size={80 * scale} color={getColor('back')}
             >
               <IconSkipBack size={52 * scale} />
             </ControlButton>
-            {/* v2: hitbox 120, icon 68/62 (≈2× original 34/31) */}
             <ControlButton
               onClick={() => handlePress('pause', onPause)}
               size={120 * scale} label={paused ? 'Play' : 'Pause'} color={getColor('pause')}
@@ -79,7 +89,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
             >
               <IconSkipForward size={52 * scale} />
             </ControlButton>
-          </>
+          </div>
         )}
       </div>
 

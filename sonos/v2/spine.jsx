@@ -58,7 +58,7 @@ function SpineThreeLines({ scale, track = {}, maxW = 0 }) {
       lineHeight: 1, whiteSpace: 'nowrap',
     }}>
       {/* Zone 1 — outer edge (left in landscape): Song, large */}
-      <Song size={49 * scale} name={track.song} maxWidth={songMaxW} />
+      <Song size={60 * scale} name={track.song} maxWidth={songMaxW} />
 
       {/* Zone 2 — inner edge (closer to album cover): Artist · Album · Year, one line */}
       <ArtistAlbumLine scale={scale} track={track} />
@@ -81,7 +81,7 @@ function ArtistAlbumLine({ scale, track = {} }) {
       {hasArtist && (
         <span style={{
           fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-          fontSize: 40 * scale, fontWeight: 500, letterSpacing: '0.28em',
+          fontSize: 30 * scale, fontWeight: 500, letterSpacing: '0.28em',
           textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
           whiteSpace: 'nowrap',
         }}>{track.artist}</span>
@@ -92,7 +92,7 @@ function ArtistAlbumLine({ scale, track = {} }) {
       {hasAlbum && (
         <span style={{
           fontFamily: '"Cormorant Garamond", serif',
-          fontSize: 48 * scale, fontStyle: 'italic', fontWeight: 400,
+          fontSize: 36 * scale, fontStyle: 'italic', fontWeight: 400,
           color: 'rgba(255,255,255,0.52)', whiteSpace: 'nowrap',
         }}>{track.album}</span>
       )}
