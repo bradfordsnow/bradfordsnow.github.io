@@ -30,10 +30,8 @@
   }
 
   .art-screen img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
     display: block;
+    /* Size is set in JS as min(vw, vh) × min(vw, vh) pixels — see ArtScreen */
   }
 
   .auth-screen {
@@ -227,6 +225,21 @@ function ArtScreen() {
   var pendingUrlRef         = useRef('');   // URL currently displayed
   var artCacheRef           = useRef({});   // 'artist\0song' → url | 'loading' | 'none'
 
+  // Square size = smallest viewport dimension, so the album fills as much
+  // screen as possible while always fitting fully (black bars fill the rest)
+  var [artSize, setArtSize] = useState(function() {
+    return Math.min(window.innerWidth, window.innerHeight);
+  });
+  useEffect(function() {
+    function onResize() { setArtSize(Math.min(window.innerWidth, window.innerHeight)); }
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return function() {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+
   var poll = useCallback(function() {
     var hid;
     (householdRef.current
@@ -293,6 +306,7 @@ function ArtScreen() {
           src: imgSrc,
           alt: '',
           onError: handleError,
+          style: { width: artSize, height: artSize },
         })
       : null,
     error
