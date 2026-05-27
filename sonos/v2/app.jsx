@@ -589,11 +589,11 @@ function Clock({ scale = 1 }) {
   const hr12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
   return (
     <div style={{
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: '"Cormorant Garamond", serif',
       fontSize: 55 * scale,  // v2.2: 48 × 1.15
-      fontWeight: 500,
-      color: '#fff', letterSpacing: '0.1em',
-      textTransform: 'uppercase', whiteSpace: 'nowrap',
+      fontWeight: 400,
+      color: '#fff', letterSpacing: '0.08em',
+      whiteSpace: 'nowrap',
     }}>
       {hr12}:{String(m).padStart(2, '0')}
     </div>
@@ -619,9 +619,9 @@ function TimeRemaining({ positionSecs = 0, durationSecs = 0, playing = false, sc
   const s = remaining % 60;
   return (
     <div style={{
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: '"Cormorant Garamond", serif',
       fontSize: 36 * scale,   // v2: doubled from 18
-      fontWeight: 500,
+      fontWeight: 400,
       color: 'rgba(255,255,255,0.28)',  // v2: lifted from 0.22 (25% lighter)
       letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
     }}>

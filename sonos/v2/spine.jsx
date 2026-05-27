@@ -48,60 +48,59 @@ function Spine({ shazam, scale = 1, lines = 3, track = {} }) {
   );
 }
 
-// ─── v2 three-line: song outer, artist+album inner ─────────────────────────
+// ─── v2 three-line: song outer, artist bottom / album top inner ───────────
+// In the rotated context: HTML left = screen bottom, HTML right = screen top.
+// Zone 1 (outer): Song — scrolls when too long.
+// Zone 2 (inner): Artist sits at screen-bottom (HTML left), Album+Year at screen-top (HTML right).
 function SpineThreeLines({ scale, track = {}, maxW = 0 }) {
-  const songMaxW = maxW > 0 ? Math.max(80, maxW - Math.round(80 * scale)) : undefined;
+  const innerW = maxW > 0 ? maxW : undefined;
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', gap: 44 * scale,
-      lineHeight: 1, whiteSpace: 'nowrap',
+      lineHeight: 1,
     }}>
-      {/* Zone 1 — outer edge (left in landscape): Song, large */}
-      <Song size={60 * scale} name={track.song} maxWidth={songMaxW} />
+      {/* Zone 1 — outer edge: Song, scrolls when long */}
+      <Song size={60 * scale} name={track.song} maxWidth={innerW} />
 
-      {/* Zone 2 — inner edge (closer to album cover): Artist · Album · Year, one line */}
-      <ArtistAlbumLine scale={scale} track={track} />
-    </div>
-  );
-}
-
-// Artist · Album · Year all inline, used in the inner zone of v2 spine
-function ArtistAlbumLine({ scale, track = {} }) {
-  const hasArtist = !!track.artist;
-  const hasAlbum  = !!track.album;
-  const hasYear   = !!track.year;
-  if (!hasArtist && !hasAlbum) return null;
-
-  return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'baseline',
-      gap: 18 * scale, lineHeight: 1,
-    }}>
-      {hasArtist && (
-        <span style={{
-          fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-          fontSize: 30 * scale, fontWeight: 500, letterSpacing: '0.28em',
-          textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
-          whiteSpace: 'nowrap',
-        }}>{track.artist}</span>
-      )}
-      {hasArtist && hasAlbum && (
-        <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: 16 * scale }}>·</span>
-      )}
-      {hasAlbum && (
-        <span style={{
-          fontFamily: '"Cormorant Garamond", serif',
-          fontSize: 36 * scale, fontStyle: 'italic', fontWeight: 400,
-          color: 'rgba(255,255,255,0.52)', whiteSpace: 'nowrap',
-        }}>{track.album}</span>
-      )}
-      {hasYear && (
-        <span style={{
-          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-          fontSize: 13 * scale, letterSpacing: '0.32em',
-          color: 'rgba(255,255,255,0.35)', whiteSpace: 'nowrap',
-        }}>{track.year}</span>
+      {/* Zone 2 — inner edge: Artist at screen-bottom, Album+Year at screen-top */}
+      {(track.artist || track.album) && (
+        <div style={{
+          display: 'flex', flexDirection: 'row',
+          justifyContent: 'space-between', alignItems: 'baseline',
+          width: innerW, whiteSpace: 'nowrap',
+        }}>
+          {/* Artist — HTML left = screen bottom */}
+          {track.artist && (
+            <span style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+              fontSize: 30 * scale, fontWeight: 500, letterSpacing: '0.28em',
+              textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)',
+            }}>{track.artist}</span>
+          )}
+          {/* Album + Year — HTML right = screen top */}
+          {(track.album || track.year) && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'baseline',
+              gap: 12 * scale,
+            }}>
+              {track.album && (
+                <span style={{
+                  fontFamily: '"Cormorant Garamond", serif',
+                  fontSize: 36 * scale, fontStyle: 'italic', fontWeight: 400,
+                  color: 'rgba(255,255,255,0.52)',
+                }}>{track.album}</span>
+              )}
+              {track.year && (
+                <span style={{
+                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                  fontSize: 13 * scale, letterSpacing: '0.32em',
+                  color: 'rgba(255,255,255,0.35)',
+                }}>{track.year}</span>
+              )}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
@@ -146,24 +145,47 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
 }
 
 // ─── Typographic atoms (unchanged) ────────────────────────────────────────
+// Song — scrolls the full title when it overflows maxWidth.
+// Uses CSS custom property --ssov (scroll overflow) + @keyframes spineScroll
+// defined in index.html. Hooks called unconditionally (React rules).
 function Song({ size, name, maxWidth }) {
+  const { useRef, useEffect, useState } = React;
+  const spanRef = useRef(null);
+  const [ov, setOv] = useState(0);
+
+  useEffect(() => {
+    if (!spanRef.current || maxWidth == null) { setOv(0); return; }
+    const excess = spanRef.current.scrollWidth - maxWidth;
+    setOv(excess > 10 ? excess : 0);
+  }, [name, maxWidth, size]);
+
   if (!name) return null;
-  return (
-    <span style={{
-      fontFamily: '"Cormorant Garamond", serif',
-      fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
-      color: '#fff',
-      ...(maxWidth != null ? {
-        display: 'block',
-        width: 'fit-content',
-        maxWidth,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        paddingBottom: '0.15em',
-      } : {}),
-    }}>{name}</span>
-  );
+
+  const baseStyle = {
+    fontFamily: '"Cormorant Garamond", serif',
+    fontSize: size, fontWeight: 500, letterSpacing: '-0.005em',
+    color: '#fff', display: 'inline-block',
+    whiteSpace: 'nowrap', paddingBottom: '0.15em',
+  };
+
+  if (maxWidth != null) {
+    // Duration scales with overflow distance so slow titles don't rush
+    const dur = Math.round(ov / 28 + 5);
+    return (
+      <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
+        <span
+          ref={spanRef}
+          style={{
+            ...baseStyle,
+            '--ssov': ov > 0 ? `-${ov}px` : '0px',
+            animation: ov > 0 ? `spineScroll ${dur}s ease-in-out infinite` : 'none',
+          }}
+        >{name}</span>
+      </div>
+    );
+  }
+
+  return <span style={baseStyle}>{name}</span>;
 }
 
 function ShazamMark({ scale }) {
