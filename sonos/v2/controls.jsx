@@ -11,8 +11,21 @@ function fmt(s) {
   return `${m}:${String(r).padStart(2, '0')}`;
 }
 
+function IconMusic({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </svg>
+  );
+}
+
 function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
-                    onSpeakerClick, speakerOpen = false, scale = 1 }) {
+                    onSpeakerClick, speakerOpen = false,
+                    onFavoritesClick, favoritesOpen = false,
+                    scale = 1 }) {
   const { useState, useRef } = React;
   const [active,      setActive]      = useState(false);
   const [lastPressed, setLastPressed] = useState(null);
@@ -93,6 +106,30 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
         )}
       </div>
 
+      {/* Favorites (My Sonos) — between pill and speaker */}
+      <div style={{
+        position: 'absolute',
+        top: '70%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+      }}>
+        <button
+          onClick={onFavoritesClick}
+          onPointerDown={(e) => e.stopPropagation()}
+          aria-label="My Sonos"
+          style={{
+            width: 44 * scale, height: 44 * scale,
+            border: 'none', background: 'transparent', padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            color: favoritesOpen ? '#fff' : 'rgba(255,255,255,0.44)',
+            transition: 'color .18s',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <IconMusic size={26 * scale} />
+        </button>
+      </div>
+
       {/* Speaker — lower portion of column */}
       <div style={{
         position: 'absolute',
@@ -146,6 +183,97 @@ function ControlButton({ children, onClick, size = 44, label, color = 'rgba(255,
       onPointerLeave={() => setPressed(false)}
     >
       {children}
+    </button>
+  );
+}
+
+// ─── Favorites / My Sonos panel ───────────────────────────────────────────
+function FavoritesPanel({
+  favorites = [], loading = false, onPlay,
+  anchorRight, anchorBottom,
+}) {
+  const LABEL = {
+    padding: '10px 12px 6px',
+    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+    fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+    fontWeight: 500, color: 'rgba(255,255,255,0.35)', textAlign: 'center',
+  };
+  return (
+    <div
+      data-favorites-panel=""
+      onPointerDown={(e) => e.stopPropagation()}
+      style={{
+        position: 'absolute', bottom: anchorBottom, right: anchorRight,
+        width: 280,
+        maxHeight: '70vh', overflowY: 'auto',
+        background: 'rgba(10,10,12,0.93)',
+        backdropFilter: 'blur(40px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(160%)',
+        border: '0.5px solid rgba(255,255,255,0.14)',
+        borderRadius: 14,
+        boxShadow: '0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset',
+        color: '#fff', zIndex: 20,
+        animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
+      }}
+    >
+      <div style={LABEL}>My Sonos</div>
+      {loading && (
+        <div style={{ padding: '12px 18px 14px', fontSize: 12, textAlign: 'center',
+          color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
+          Loading…
+        </div>
+      )}
+      {!loading && favorites.length === 0 && (
+        <div style={{ padding: '12px 18px 14px', fontSize: 12, textAlign: 'center',
+          color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
+          No favorites found
+        </div>
+      )}
+      {!loading && favorites.map(fav => (
+        <FavoriteRow key={fav.id} favorite={fav} onPlay={() => onPlay?.(fav)} />
+      ))}
+    </div>
+  );
+}
+
+function FavoriteRow({ favorite, onPlay }) {
+  return (
+    <button
+      onClick={onPlay}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        width: '100%', padding: '7px 12px',
+        background: 'transparent', border: 'none', color: '#fff',
+        cursor: 'pointer', textAlign: 'left',
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      {favorite.imageUrl ? (
+        <img src={favorite.imageUrl} alt=""
+             style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
+      ) : (
+        <div style={{
+          width: 36, height: 36, borderRadius: 4,
+          background: 'rgba(255,255,255,0.08)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'rgba(255,255,255,0.4)',
+        }}>
+          <IconMusic size={16} />
+        </div>
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 500,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {favorite.name}
+        </div>
+        {favorite.description ? (
+          <div style={{ fontSize: 10, marginTop: 2, color: 'rgba(255,255,255,0.4)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {favorite.description}
+          </div>
+        ) : null}
+      </div>
     </button>
   );
 }
@@ -414,4 +542,5 @@ function VolumePanel({ volume, onChange, anchorRight, anchorTop }) {
 function VerticalVolumeSlider({ volume, onChange, scale = 1 }) { return null; }
 
 Object.assign(window, { Controls, ControlButton, VolumePanel, VerticalVolumeSlider,
-                         SpeakerPanel, SourceRow, GroupRow, SpeakerRow, fmt });
+                         SpeakerPanel, FavoritesPanel, FavoriteRow,
+                         SourceRow, GroupRow, SpeakerRow, fmt });

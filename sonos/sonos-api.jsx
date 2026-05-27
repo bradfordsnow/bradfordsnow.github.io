@@ -160,6 +160,10 @@ const SonosAPI = {
   getPlayerVolume(playerId)      { return this._get(`/players/${playerId}/playerVolume`); },
   setPlayerVolume(playerId, vol) { return this._post(`/players/${playerId}/playerVolume`, { volume: vol }); },
 
+  // ── Favorites (My Sonos) ───────────────────────────────────────────────
+  getFavorites(householdId)         { return this._get(`/households/${householdId}/favorites`); },
+  loadFavorite(groupId, favoriteId) { return this._post(`/groups/${groupId}/favorites`, { favoriteId }); },
+
   // ── Group membership ───────────────────────────────────────────────────
   modifyGroupMembers(groupId, playerIdsToAdd = [], playerIdsToRemove = []) {
     return this._post(`/groups/${groupId}/groups/modifyGroupMembers`,

@@ -417,9 +417,12 @@ const IS_REAL_DEVICE = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const { data, actions, refreshPlayerVolumes } = useSonos();
+  const { data, actions, poll, refreshPlayerVolumes } = useSonos();
 
-  const [speakerOpen, setSpeakerOpen] = useState(false);
+  const [speakerOpen,      setSpeakerOpen]      = useState(false);
+  const [favoritesOpen,    setFavoritesOpen]    = useState(false);
+  const [favoritesList,    setFavoritesList]    = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const speakerTimer = useRef(null);
 
   const resetSpeakerTimer = () => {
@@ -429,9 +432,43 @@ function App() {
 
   useEffect(() => { if (speakerOpen) resetSpeakerTimer(); }, [speakerOpen]);
 
-  const onSpeakerClick    = () => { setSpeakerOpen(v => !v); };
+  const onSpeakerClick    = () => { setSpeakerOpen(v => !v); setFavoritesOpen(false); };
   const onCloseSpeaker    = () => { setSpeakerOpen(false); };
   const onSpeakerActivity = () => { resetSpeakerTimer(); };
+
+  const fetchFavorites = useCallback(async () => {
+    if (!data.householdId) return;
+    setFavoritesLoading(true);
+    try {
+      const res  = await SonosAPI.getFavorites(data.householdId);
+      const list = (res.favorites || res.items || []).map(f => ({
+        id:          f.id,
+        name:        f.name        || '',
+        description: f.description || '',
+        imageUrl:    _resolveCdnUrl(f.imageUrl) || null,
+      }));
+      setFavoritesList(list);
+    } catch (err) {
+      console.warn('Favorites fetch error:', err.message);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, [data.householdId]);
+
+  const onFavoritesClick = () => {
+    const next = !favoritesOpen;
+    setFavoritesOpen(next);
+    if (next) { setSpeakerOpen(false); fetchFavorites(); }
+  };
+  const onCloseFavorites = () => setFavoritesOpen(false);
+  const onPlayFavorite   = (fav) => {
+    if (data.activeGroupId) {
+      SonosAPI.loadFavorite(data.activeGroupId, fav.id)
+        .then(() => setTimeout(() => poll(), 1500))
+        .catch(err => console.warn('loadFavorite error:', err.message));
+    }
+    setFavoritesOpen(false);
+  };
 
   useEffect(() => {
     if (speakerOpen) {
@@ -503,6 +540,8 @@ function App() {
     onAddPlayer:          (id) => { actions.addToGroup(id); },
     onRemovePlayer:       (id) => { actions.removeFromGroup(id); },
     typeScale, lines: t.spineLines,
+    favoritesOpen, favoritesLoading, favoritesList,
+    onFavoritesClick, onCloseFavorites, onPlayFavorite,
   };
 
   let inner;
@@ -737,6 +776,8 @@ function LandscapeLayout({
   onSwitchGroup, onAddPlayer, onRemovePlayer,
   typeScale = 1, lines = 3, track = {},
   positionSecs = 0,
+  favoritesOpen = false, favoritesLoading = false, favoritesList = [],
+  onFavoritesClick, onCloseFavorites, onPlayFavorite,
 }) {
   const artSize = height;
   const controlW = 160 * typeScale;  // v2: widened from 84 to fit 2× icons
@@ -749,10 +790,10 @@ function LandscapeLayout({
       display: 'flex', alignItems: 'stretch',
       fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
     }}>
-      {speakerOpen && (
+      {(speakerOpen || favoritesOpen) && (
         <div
           style={{ position: 'absolute', inset: 0, zIndex: 19 }}
-          onPointerDown={onCloseSpeaker}
+          onPointerDown={() => { onCloseSpeaker?.(); onCloseFavorites?.(); }}
         />
       )}
 
@@ -774,19 +815,27 @@ function LandscapeLayout({
             onActivity={onSpeakerActivity}
             anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
         )}
+
+        {favoritesOpen && (
+          <FavoritesPanel
+            favorites={favoritesList} loading={favoritesLoading}
+            onPlay={onPlayFavorite}
+            anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
+        )}
       </div>
 
       <div style={{ flex: 1, height: '100%', background: '#000', display: 'flex', alignItems: 'stretch', justifyContent: 'center', position: 'relative', zIndex: 20 }}>
         <Controls width={controlW} vinyl={vinyl} paused={paused}
                   onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
                   onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
+                  onFavoritesClick={onFavoritesClick} favoritesOpen={favoritesOpen}
                   scale={typeScale} />
 
         <div style={{ position: 'absolute', top: 28 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
           <Clock scale={typeScale} sideW={sideW} />
         </div>
 
-        <div style={{ position: 'absolute', bottom: 28 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', bottom: 12 * typeScale, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
           <TimeRemaining
             positionSecs={positionSecs}
             durationSecs={track?.durationSecs || 0}

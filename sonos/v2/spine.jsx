@@ -147,16 +147,17 @@ function SpineOneLine({ scale, track = {}, maxW = 0 }) {
 
 // ─── SongFlex — scrolling song title within a flex container ─────────────
 // Sits at flex: 1 1 0 between artist (left) and album (right).
-// Pauses for 5 s at the start of each revolution via animationiteration +
-// direct DOM animationPlayState (avoids React async delay at the reset point).
+// Starts paused at position 0 for 5 s on each new track, then scrolls.
+// Pauses again for 5 s at the start of each subsequent revolution.
+// Uses React state for animationPlayState — cleaner than direct DOM mutation.
 function SongFlex({ size, name }) {
   const { useRef, useEffect, useState } = React;
-  const containerRef = useRef(null);
-  const textRef      = useRef(null);
-  const scrollRef    = useRef(null);
-  const pauseTimer   = useRef(null);
-  const [textW,      setTextW]      = useState(0);
-  const [containerW, setContainerW] = useState(0);
+  const containerRef   = useRef(null);
+  const textRef        = useRef(null);
+  const pauseTimer     = useRef(null);
+  const [textW,        setTextW]        = useState(0);
+  const [containerW,   setContainerW]   = useState(0);
+  const [scrollPaused, setScrollPaused] = useState(true);
 
   useEffect(() => {
     const update = () => {
@@ -170,10 +171,11 @@ function SongFlex({ size, name }) {
     return () => ro.disconnect();
   }, [name, size]);
 
-  // Reset pause when track changes
+  // Start paused at position 0; begin scrolling after 5 s on each new track
   useEffect(() => {
     clearTimeout(pauseTimer.current);
-    if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+    setScrollPaused(true);
+    pauseTimer.current = setTimeout(() => setScrollPaused(false), 5000);
   }, [name]);
 
   // Cleanup on unmount
@@ -185,12 +187,9 @@ function SongFlex({ size, name }) {
   const shouldScroll = containerW > 0 && textW > containerW + 10;
 
   const handleIteration = () => {
-    if (!scrollRef.current) return;
-    scrollRef.current.style.animationPlayState = 'paused';
+    setScrollPaused(true);
     clearTimeout(pauseTimer.current);
-    pauseTimer.current = setTimeout(() => {
-      if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
-    }, 5000);
+    pauseTimer.current = setTimeout(() => setScrollPaused(false), 5000);
   };
 
   const textStyle = {
@@ -205,10 +204,11 @@ function SongFlex({ size, name }) {
     const dur = (totalDist / 48).toFixed(2);
     return (
       <div ref={containerRef} style={{ flex: '1 1 0', minWidth: 0, overflow: 'hidden' }}>
-        <div ref={scrollRef} onAnimationIteration={handleIteration} style={{
+        <div onAnimationIteration={handleIteration} style={{
           display: 'inline-flex', alignItems: 'baseline',
           '--ms-dist': `-${totalDist}px`,
           animation: `continuousScroll ${dur}s linear infinite`,
+          animationPlayState: scrollPaused ? 'paused' : 'running',
         }}>
           <span ref={textRef} style={{ ...textStyle, marginRight: GAP }}>{name}</span>
           <span aria-hidden="true" style={textStyle}>{name}</span>
@@ -231,19 +231,21 @@ function SongFlex({ size, name }) {
 // Hooks always called (no conditional hook calls — React rules).
 function Song({ size, name, maxWidth }) {
   const { useRef, useEffect, useState } = React;
-  const spanRef    = useRef(null);
-  const scrollRef  = useRef(null);
-  const pauseTimer = useRef(null);
-  const [textW, setTextW] = useState(0);
+  const spanRef        = useRef(null);
+  const pauseTimer     = useRef(null);
+  const [textW,        setTextW]        = useState(0);
+  const [scrollPaused, setScrollPaused] = useState(true);
 
   useEffect(() => {
     if (!spanRef.current) return;
     setTextW(spanRef.current.offsetWidth);
   }, [name, size]);
 
+  // Start paused at position 0; begin scrolling after 5 s on each new track
   useEffect(() => {
     clearTimeout(pauseTimer.current);
-    if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
+    setScrollPaused(true);
+    pauseTimer.current = setTimeout(() => setScrollPaused(false), 5000);
   }, [name]);
 
   useEffect(() => () => clearTimeout(pauseTimer.current), []);
@@ -254,12 +256,9 @@ function Song({ size, name, maxWidth }) {
   const shouldScroll = maxWidth != null && textW > 0 && textW > maxWidth + 10;
 
   const handleIteration = () => {
-    if (!scrollRef.current) return;
-    scrollRef.current.style.animationPlayState = 'paused';
+    setScrollPaused(true);
     clearTimeout(pauseTimer.current);
-    pauseTimer.current = setTimeout(() => {
-      if (scrollRef.current) scrollRef.current.style.animationPlayState = 'running';
-    }, 5000);
+    pauseTimer.current = setTimeout(() => setScrollPaused(false), 5000);
   };
 
   const textStyle = {
@@ -275,10 +274,11 @@ function Song({ size, name, maxWidth }) {
       const dur = (totalDist / 48).toFixed(2);
       return (
         <div style={{ overflow: 'hidden', maxWidth, display: 'block' }}>
-          <div ref={scrollRef} onAnimationIteration={handleIteration} style={{
+          <div onAnimationIteration={handleIteration} style={{
             display: 'inline-flex', alignItems: 'center',
             '--ms-dist': `-${totalDist}px`,
             animation: `continuousScroll ${dur}s linear infinite`,
+            animationPlayState: scrollPaused ? 'paused' : 'running',
           }}>
             <span ref={spanRef} style={{ ...textStyle, marginRight: GAP }}>{name}</span>
             <span aria-hidden="true" style={textStyle}>{name}</span>
