@@ -603,10 +603,10 @@ function Clock({ scale = 1, sideW = 0 }) {
   const [time,    setTime]    = useState(new Date());
   const [weather, setWeather] = useState(null);
 
-  // Scale clock content down so it always fits the right column.
-  // "12:00" at 72px PJS weight-500 + 0.1em LS ≈ 190px natural width.
-  // Subtract 20px padding (10 each side). Cap at the device typeScale.
-  const cs = sideW > 0 ? Math.min(scale, (sideW - 20) / 190) : scale;
+  // Scale clock content to fit the right column.
+  // Two-line layout: widest element is "00" (minutes) at 72px PJS weight-500
+  // + 0.1em LS ≈ 105px natural width. Subtract 20px padding.
+  const cs = sideW > 0 ? Math.min(scale, (sideW - 20) / 105) : scale;
 
   // Minute-accurate clock sync
   useEffect(() => {
@@ -638,19 +638,29 @@ function Clock({ scale = 1, sideW = 0 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 * cs }}>
 
-      {/* Date — Plus Jakarta Sans, matches artist style */}
+      {/* Date — Plus Jakarta Sans, matches artist style (+15%) */}
       <div style={{
-        fontFamily: _JF, fontSize: 15 * cs, fontWeight: 500,
+        fontFamily: _JF, fontSize: 17 * cs, fontWeight: 500,
         letterSpacing: '0.28em', textTransform: 'uppercase',
         color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap',
       }}>{dateStr}</div>
 
-      {/* Time */}
+      {/* Time — two-line: hour / colon / minutes */}
       <div style={{
-        fontFamily: _JF, fontSize: 72 * cs, fontWeight: 500,
-        letterSpacing: '0.1em', color: '#fff', whiteSpace: 'nowrap',
-        lineHeight: 1,
-      }}>{hr12}:{String(m).padStart(2, '0')}</div>
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 0, fontFamily: _JF, fontWeight: 500, lineHeight: 0.9,
+      }}>
+        <div style={{
+          fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
+        }}>{hr12}</div>
+        <div style={{
+          fontSize: 13 * cs, letterSpacing: '0.18em',
+          color: 'rgba(255,255,255,0.38)', lineHeight: 1.6,
+        }}>:</div>
+        <div style={{
+          fontSize: 72 * cs, letterSpacing: '0.1em', color: '#fff',
+        }}>{String(m).padStart(2, '0')}</div>
+      </div>
 
       {/* Weather: 58°   72°   85° */}
       {weather && (
