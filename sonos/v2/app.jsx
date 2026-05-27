@@ -662,14 +662,14 @@ function Clock({ scale = 1, sideW = 0 }) {
       {weather && (
         <div style={{
           display: 'flex', alignItems: 'baseline', gap: 6 * cs,
-          fontFamily: _JF,
+          fontFamily: _JF, marginTop: 10 * cs,
         }}>
           <span style={{
             fontSize: 20 * cs, fontWeight: 500, letterSpacing: '0.08em',
             color: 'rgba(255,255,255,0.42)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.lo}°</span>
           <span style={{
-            fontSize: 38 * cs, fontWeight: 500, letterSpacing: '0.1em',
+            fontSize: 38 * cs, fontWeight: 500, letterSpacing: 0,
             color: 'rgba(255,255,255,0.82)', whiteSpace: 'nowrap', lineHeight: 1,
           }}>{weather.current}°</span>
           <span style={{
