@@ -109,15 +109,24 @@ function _isLocalUrl(url) {
 
 function _resolveCdnUrl(url) {
   if (!url) return null;
-  if (!_isLocalUrl(url)) return url;
-  try {
-    var u = new URL(url).searchParams.get('u');
-    if (!u) return null;
-    var decoded = decodeURIComponent(u).replace(/^x-sonos-https?:\/\//i, 'https://');
-    if (decoded.startsWith('http://') && !_isLocalUrl(decoded))
-      decoded = 'https://' + decoded.slice(7);
-    if (decoded.startsWith('https://') && !_isLocalUrl(decoded)) return decoded;
-  } catch(e) {}
+  // ① Sonos custom scheme → strip prefix and recurse
+  if (/^x-sonos-https?:\/\//i.test(url))
+    return _resolveCdnUrl(url.replace(/^x-sonos-https?:\/\//i, 'https://'));
+  // ② Local device proxy → extract `u` param and recurse
+  if (_isLocalUrl(url)) {
+    try {
+      var u = new URL(url).searchParams.get('u');
+      if (u) return _resolveCdnUrl(decodeURIComponent(u));
+    } catch(e) {}
+    return null;
+  }
+  // ③ Plain http → upgrade to https
+  if (url.startsWith('http://')) {
+    var up = 'https://' + url.slice(7);
+    return _isLocalUrl(up) ? null : up;
+  }
+  // ④ Already https
+  if (url.startsWith('https://')) return url;
   return null;
 }
 

@@ -16,23 +16,45 @@ function _isLocalUrl(url) {
   return Boolean(url && /^http:\/\/(127\.|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(url));
 }
 
-// Sonos local proxy URLs have the real CDN URL encoded in their `u` query param:
-//   http://192.168.x.x:1400/getaa?u=x-sonos-http%3A%2F%2Fi.scdn.co%2Fimage%2F...
-// Extract and return that CDN URL. For non-local URLs, returns the URL unchanged.
-// Returns null if local but no extractable CDN URL (e.g. locally-stored files).
+// Recursively resolve any Sonos URL shape to a loadable https:// CDN URL.
+//
+// Sonos returns artwork in several formats depending on API version / service:
+//   1. x-sonos-http://i.scdn.co/...         — custom scheme, cloud API direct
+//   2. x-sonos-https://is1-ssl.mzstatic.com/... — custom scheme, cloud API direct
+//   3. http://192.168.x.x:1400/getaa?u=...  — local device proxy wrapping one of (1-4)
+//   4. https://cdn.example.com/...           — plain CDN URL, return as-is
+//   5. http://cdn.example.com/...            — plain CDN URL, upgrade to https
+//
+// The recursive design handles nested encodings naturally: extracting the `u`
+// parameter from a local proxy URL yields another Sonos URL shape which is
+// then resolved by the same rules.
 function _resolveCdnUrl(url) {
   if (!url) return null;
-  if (!_isLocalUrl(url)) return url;
-  try {
-    const u = new URL(url).searchParams.get('u');
-    if (!u) return null;
-    let decoded = decodeURIComponent(u)
-      .replace(/^x-sonos-https?:\/\//i, 'https://');
-    // Some Sonos versions encode plain http:// CDN URLs — upgrade them
-    if (decoded.startsWith('http://') && !_isLocalUrl(decoded))
-      decoded = 'https://' + decoded.slice(7);
-    if (decoded.startsWith('https://') && !_isLocalUrl(decoded)) return decoded;
-  } catch {}
+
+  // ① Sonos custom scheme → strip prefix and recurse (handles types 1 & 2)
+  if (/^x-sonos-https?:\/\//i.test(url))
+    return _resolveCdnUrl(url.replace(/^x-sonos-https?:\/\//i, 'https://'));
+
+  // ② Local Sonos device proxy → pull out the real URL from the `u` param and recurse
+  if (_isLocalUrl(url)) {
+    try {
+      const u = new URL(url).searchParams.get('u');
+      if (u) return _resolveCdnUrl(decodeURIComponent(u));
+    } catch {}
+    return null;   // local proxy with no extractable CDN URL (e.g. local library file)
+  }
+
+  // ③ Plain http CDN URL → upgrade to https (types 5)
+  if (url.startsWith('http://')) {
+    const upgraded = 'https://' + url.slice(7);
+    if (!_isLocalUrl(upgraded)) return upgraded;
+    return null;
+  }
+
+  // ④ Already a clean https URL → return as-is (type 4)
+  if (url.startsWith('https://')) return url;
+
+  // ⑤ Unknown / unloadable scheme (e.g. x-rincon, file://) → reject
   return null;
 }
 
@@ -558,6 +580,22 @@ function App() {
         </div>
       )}
       {framed}
+
+      {/* Gear button — opens the tweaks/settings panel from the real device.
+          Positioned bottom-left so it doesn't overlap the TweaksPanel (bottom-right). */}
+      <button
+        onClick={() => window.postMessage({ type: '__activate_edit_mode' }, '*')}
+        style={{
+          position: 'fixed', bottom: 14, left: 14, zIndex: 9000,
+          width: 34, height: 34, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.07)',
+          border: '0.5px solid rgba(255,255,255,0.14)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'rgba(255,255,255,0.35)',
+          fontSize: 15, lineHeight: 1,
+        }}
+        title="Settings"
+      >⚙</button>
 
       <TweaksPanel title="Sonos Player">
         <TweakSection label="Device" />
