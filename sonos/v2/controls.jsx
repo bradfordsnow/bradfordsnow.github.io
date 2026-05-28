@@ -107,7 +107,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       {/* Favorites (My Sonos) — just above speaker */}
       <div style={{
         position: 'absolute',
-        top: '83%', left: '50%',
+        top: '85%', left: '50%',
         transform: 'translate(-50%, -50%)',
       }}>
         <button
