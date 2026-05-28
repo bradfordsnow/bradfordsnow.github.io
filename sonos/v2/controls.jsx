@@ -107,7 +107,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       {/* Favorites (My Sonos) — just above speaker */}
       <div style={{
         position: 'absolute',
-        top: '76%', left: '50%',
+        top: '80%', left: '50%',
         transform: 'translate(-50%, -50%)',
       }}>
         <button
@@ -131,7 +131,7 @@ function Controls({ width, vinyl, paused, onPause, onSkipBack, onSkipForward,
       {/* Speaker — lower portion of column */}
       <div style={{
         position: 'absolute',
-        top: '84%', left: '50%',
+        top: '87%', left: '50%',
         transform: 'translate(-50%, -50%)',
       }}>
         <button
@@ -187,23 +187,32 @@ function ControlButton({ children, onClick, size = 44, label, color = 'rgba(255,
 
 // ─── Favorites / My Sonos panel ───────────────────────────────────────────
 function FavoritesPanel({
-  favorites = [], loading = false, onPlay,
+  favorites = [], favoritesLoading = false, onPlayFavorite,
+  playlists = [], playlistsLoading = false, onPlayPlaylist,
   anchorRight, anchorBottom,
 }) {
-  const LABEL = {
-    padding: '10px 12px 6px',
-    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
-    fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
-    fontWeight: 500, color: 'rgba(255,255,255,0.35)', textAlign: 'center',
-  };
+  const { useState } = React;
+  const [tab,    setTab]    = useState('favorites');
+  const [filter, setFilter] = useState('');
+
+  const items   = tab === 'favorites' ? favorites   : playlists;
+  const loading = tab === 'favorites' ? favoritesLoading : playlistsLoading;
+  const onPlay  = tab === 'favorites' ? onPlayFavorite   : onPlayPlaylist;
+
+  const lc       = filter.toLowerCase();
+  const filtered = filter ? items.filter(i => i.name.toLowerCase().includes(lc)) : items;
+
+  const switchTab = (t) => { setTab(t); setFilter(''); };
+
   return (
     <div
       data-favorites-panel=""
       onPointerDown={(e) => e.stopPropagation()}
       style={{
         position: 'absolute', bottom: anchorBottom, right: anchorRight,
-        width: 280,
-        maxHeight: '70vh', overflowY: 'auto',
+        width: 300,
+        maxHeight: '72vh',
+        display: 'flex', flexDirection: 'column',
         background: 'rgba(10,10,12,0.93)',
         backdropFilter: 'blur(40px) saturate(160%)',
         WebkitBackdropFilter: 'blur(40px) saturate(160%)',
@@ -212,29 +221,85 @@ function FavoritesPanel({
         boxShadow: '0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset',
         color: '#fff', zIndex: 20,
         animation: 'panelIn .22s cubic-bezier(.2,.7,.3,1)',
+        overflow: 'hidden',
       }}
     >
-      <div style={LABEL}>My Sonos</div>
-      {loading && (
-        <div style={{ padding: '12px 18px 14px', fontSize: 12, textAlign: 'center',
-          color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
-          Loading…
-        </div>
-      )}
-      {!loading && favorites.length === 0 && (
-        <div style={{ padding: '12px 18px 14px', fontSize: 12, textAlign: 'center',
-          color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
-          No favorites found
-        </div>
-      )}
-      {!loading && favorites.map(fav => (
-        <FavoriteRow key={fav.id} favorite={fav} onPlay={() => onPlay?.(fav)} />
-      ))}
+      {/* Tab bar */}
+      <div style={{
+        display: 'flex', flexShrink: 0,
+        borderBottom: '0.5px solid rgba(255,255,255,0.1)',
+      }}>
+        {[['favorites', 'Favorites'], ['playlists', 'Playlists']].map(([key, label]) => (
+          <button key={key} onClick={() => switchTab(key)} style={{
+            flex: 1, padding: '11px 0',
+            background: 'transparent', border: 'none',
+            borderBottom: tab === key
+              ? '1.5px solid rgba(255,255,255,0.7)'
+              : '1.5px solid transparent',
+            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+            fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase',
+            fontWeight: 500,
+            color: tab === key ? '#fff' : 'rgba(255,255,255,0.32)',
+            cursor: 'pointer', transition: 'color .15s',
+            WebkitTapHighlightColor: 'transparent',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* Filter input */}
+      <div style={{
+        padding: '8px 10px', flexShrink: 0,
+        borderBottom: '0.5px solid rgba(255,255,255,0.07)',
+      }}>
+        <input
+          type="text"
+          placeholder="Filter…"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          style={{
+            width: '100%',
+            background: 'rgba(255,255,255,0.07)',
+            border: '0.5px solid rgba(255,255,255,0.12)',
+            borderRadius: 7, padding: '7px 10px',
+            fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+            fontSize: 12, color: '#fff', outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+
+      {/* Scrollable list */}
+      <div style={{ overflowY: 'auto', flex: 1 }}>
+        {loading && (
+          <div style={{ padding: '14px 18px', fontSize: 12, textAlign: 'center',
+            color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
+            Loading…
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <div style={{ padding: '14px 18px', fontSize: 12, textAlign: 'center',
+            color: 'rgba(255,255,255,0.28)', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif' }}>
+            {filter ? 'No matches' : `No ${tab} found`}
+          </div>
+        )}
+        {!loading && filtered.map(item => (
+          <FavoriteRow key={item.id} item={item} onPlay={() => onPlay?.(item)} />
+        ))}
+      </div>
     </div>
   );
 }
 
-function FavoriteRow({ favorite, onPlay }) {
+const _TYPE_LABEL = {
+  album: 'Album', artist: 'Artist', playlist: 'Playlist',
+  radio: 'Radio', track: 'Track', song: 'Track',
+  audiobook: 'Book', podcast: 'Podcast',
+};
+
+function FavoriteRow({ item, onPlay }) {
+  const typeLabel  = item.type ? (_TYPE_LABEL[item.type.toLowerCase()] || item.type) : null;
+  const subLabel   = item.service || (item.trackCount ? `${item.trackCount} tracks` : null);
+
   return (
     <button
       onClick={onPlay}
@@ -247,30 +312,46 @@ function FavoriteRow({ favorite, onPlay }) {
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {favorite.imageUrl ? (
-        <img src={favorite.imageUrl} alt=""
+      {item.imageUrl ? (
+        <img src={item.imageUrl} alt=""
              style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
       ) : (
         <div style={{
           width: 36, height: 36, borderRadius: 4,
           background: 'rgba(255,255,255,0.08)', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'rgba(255,255,255,0.4)',
+          color: 'rgba(255,255,255,0.35)',
         }}>
-          <IconMusic size={16} />
+          <IconMusic size={15} />
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 500,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {favorite.name}
+          {item.name}
         </div>
-        {favorite.description ? (
-          <div style={{ fontSize: 10, marginTop: 2, color: 'rgba(255,255,255,0.4)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {favorite.description}
+        {(typeLabel || subLabel) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+            {typeLabel && (
+              <span style={{
+                fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase',
+                fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                color: 'rgba(255,255,255,0.35)',
+              }}>{typeLabel}</span>
+            )}
+            {typeLabel && subLabel && (
+              <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>·</span>
+            )}
+            {subLabel && (
+              <span style={{
+                fontSize: 8, letterSpacing: '0.12em',
+                fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                color: 'rgba(255,255,255,0.28)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{subLabel}</span>
+            )}
           </div>
-        ) : null}
+        )}
       </div>
     </button>
   );

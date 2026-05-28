@@ -164,6 +164,10 @@ const SonosAPI = {
   getFavorites(householdId)         { return this._get(`/households/${householdId}/favorites`); },
   loadFavorite(groupId, favoriteId) { return this._post(`/groups/${groupId}/favorites`, { favoriteId }); },
 
+  // ── Playlists ──────────────────────────────────────────────────────────
+  getPlaylists(householdId)          { return this._get(`/households/${householdId}/playlists`); },
+  loadPlaylist(groupId, playlistId)  { return this._post(`/groups/${groupId}/playlists`, { playlistId, playOnCompletion: true }); },
+
   // ── Group membership ───────────────────────────────────────────────────
   modifyGroupMembers(groupId, playerIdsToAdd = [], playerIdsToRemove = []) {
     return this._post(`/groups/${groupId}/groups/modifyGroupMembers`,

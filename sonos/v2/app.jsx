@@ -57,16 +57,40 @@ async function _fetchItunesArt(artist, song) {
 }
 
 // ─── Weather (Open-Meteo, free, no auth, CORS-enabled) ────────────────────
-// Coordinates: Los Angeles, CA. Temperatures in °F.
+// Uses device GPS when available; falls back to Pasadena, CA.
+// Cached coords so we don't re-prompt on every 30-min refresh.
+let _weatherCoords = null; // null = untried, false = denied/unavailable
+
+async function _getCoords() {
+  if (_weatherCoords === false) return null;  // already denied this session
+  if (_weatherCoords) return _weatherCoords;
+  if (!navigator.geolocation) { _weatherCoords = false; return null; }
+  try {
+    const pos = await new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        timeout: 6000, maximumAge: 600000,
+      })
+    );
+    _weatherCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    return _weatherCoords;
+  } catch {
+    _weatherCoords = false; // denied or timed out — skip for rest of session
+    return null;
+  }
+}
+
 async function _fetchWeather() {
   try {
+    const coords = await _getCoords();
+    if (!coords) return null;
+    const { lat, lon } = coords;
     const r = await fetch(
-      'https://api.open-meteo.com/v1/forecast' +
-      '?latitude=34.05&longitude=-118.24' +
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}` +
       '&current=temperature_2m' +
       '&daily=temperature_2m_max,temperature_2m_min' +
       '&temperature_unit=fahrenheit&forecast_days=1' +
-      '&timezone=America%2FLos_Angeles'
+      '&timezone=auto'
     );
     if (!r.ok) return null;
     const d = await r.json();
@@ -423,6 +447,8 @@ function App() {
   const [favoritesOpen,    setFavoritesOpen]    = useState(false);
   const [favoritesList,    setFavoritesList]    = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [playlistsList,    setPlaylistsList]    = useState([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const speakerTimer = useRef(null);
 
   const resetSpeakerTimer = () => {
@@ -446,6 +472,8 @@ function App() {
         name:        f.name        || '',
         description: f.description || '',
         imageUrl:    _resolveCdnUrl(f.imageUrl) || null,
+        type:        f.resource?.type || f.type  || null,
+        service:     f.service?.name  || null,
       }));
       setFavoritesList(list);
     } catch (err) {
@@ -455,10 +483,31 @@ function App() {
     }
   }, [data.householdId]);
 
+  const fetchPlaylists = useCallback(async () => {
+    if (!data.householdId) return;
+    setPlaylistsLoading(true);
+    try {
+      const res  = await SonosAPI.getPlaylists(data.householdId);
+      const list = (res.playlists || []).map(p => ({
+        id:         p.id,
+        name:       p.name       || '',
+        imageUrl:   _resolveCdnUrl(p.imageUrl) || null,
+        type:       'playlist',
+        trackCount: p.trackCount || null,
+        service:    null,
+      }));
+      setPlaylistsList(list);
+    } catch (err) {
+      console.warn('Playlists fetch error:', err.message);
+    } finally {
+      setPlaylistsLoading(false);
+    }
+  }, [data.householdId]);
+
   const onFavoritesClick = () => {
     const next = !favoritesOpen;
     setFavoritesOpen(next);
-    if (next) { setSpeakerOpen(false); fetchFavorites(); }
+    if (next) { setSpeakerOpen(false); fetchFavorites(); fetchPlaylists(); }
   };
   const onCloseFavorites = () => setFavoritesOpen(false);
   const onPlayFavorite   = (fav) => {
@@ -466,6 +515,14 @@ function App() {
       SonosAPI.loadFavorite(data.activeGroupId, fav.id)
         .then(() => setTimeout(() => poll(), 1500))
         .catch(err => console.warn('loadFavorite error:', err.message));
+    }
+    setFavoritesOpen(false);
+  };
+  const onPlayPlaylist = (pl) => {
+    if (data.activeGroupId) {
+      SonosAPI.loadPlaylist(data.activeGroupId, pl.id)
+        .then(() => setTimeout(() => poll(), 1500))
+        .catch(err => console.warn('loadPlaylist error:', err.message));
     }
     setFavoritesOpen(false);
   };
@@ -540,8 +597,10 @@ function App() {
     onAddPlayer:          (id) => { actions.addToGroup(id); },
     onRemovePlayer:       (id) => { actions.removeFromGroup(id); },
     typeScale, lines: t.spineLines,
-    favoritesOpen, favoritesLoading, favoritesList,
-    onFavoritesClick, onCloseFavorites, onPlayFavorite,
+    favoritesOpen,
+    favoritesList, favoritesLoading,
+    playlistsList, playlistsLoading,
+    onFavoritesClick, onCloseFavorites, onPlayFavorite, onPlayPlaylist,
   };
 
   let inner;
@@ -776,8 +835,10 @@ function LandscapeLayout({
   onSwitchGroup, onAddPlayer, onRemovePlayer,
   typeScale = 1, lines = 3, track = {},
   positionSecs = 0,
-  favoritesOpen = false, favoritesLoading = false, favoritesList = [],
-  onFavoritesClick, onCloseFavorites, onPlayFavorite,
+  favoritesOpen = false,
+  favoritesList = [], favoritesLoading = false,
+  playlistsList = [], playlistsLoading = false,
+  onFavoritesClick, onCloseFavorites, onPlayFavorite, onPlayPlaylist,
 }) {
   const artSize = height;
   const controlW = 160 * typeScale;  // v2: widened from 84 to fit 2× icons
@@ -818,8 +879,9 @@ function LandscapeLayout({
 
         {favoritesOpen && (
           <FavoritesPanel
-            favorites={favoritesList} loading={favoritesLoading}
-            onPlay={onPlayFavorite}
+            favorites={favoritesList}  favoritesLoading={favoritesLoading}
+            playlists={playlistsList}  playlistsLoading={playlistsLoading}
+            onPlayFavorite={onPlayFavorite} onPlayPlaylist={onPlayPlaylist}
             anchorBottom={40 * typeScale} anchorRight={30 * typeScale} />
         )}
       </div>
