@@ -909,7 +909,7 @@ function LandscapeLayout({
       </div>
 
       <div style={{ flex: 1, height: '100%', background: '#000', display: 'flex', alignItems: 'stretch', justifyContent: 'center', position: 'relative', zIndex: 20 }}>
-        <Controls width={controlW} vinyl={vinyl} paused={paused}
+        <Controls width={sideW} vinyl={vinyl} paused={paused}
                   onPause={onPause} onSkipBack={onSkipBack} onSkipForward={onSkipForward}
                   onSpeakerClick={onSpeakerClick} speakerOpen={speakerOpen}
                   onFavoritesClick={onFavoritesClick} favoritesOpen={favoritesOpen}
