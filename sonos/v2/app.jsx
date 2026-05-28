@@ -129,6 +129,7 @@ function useSonos() {
 
   const householdRef          = useRef(null);
   const selectedGroupRef      = useRef(null);
+  const userPickedGroupRef    = useRef(false);   // true when user manually chose a group
   const volumeDebounce        = useRef(null);
   const playerVolumeDebounces = useRef({});
   const artCacheRef           = useRef({});
@@ -145,6 +146,26 @@ function useSonos() {
         await SonosAPI.fetchState(householdRef.current, selectedGroupRef.current);
 
       if (!selectedGroupRef.current && active) selectedGroupRef.current = active.id;
+
+      // Auto-switch: if the shown group is not playing and another group is,
+      // follow the action — unless the user explicitly picked this group.
+      if (userPickedGroupRef.current) {
+        // Release manual lock once the chosen group is actually playing,
+        // so auto-switch resumes naturally from that point forward.
+        const shownGroup = groups.find(g => g.id === selectedGroupRef.current);
+        if (shownGroup?.playbackState === 'PLAYBACK_STATE_PLAYING') {
+          userPickedGroupRef.current = false;
+        }
+      } else if (selectedGroupRef.current) {
+        const shownGroup     = groups.find(g => g.id === selectedGroupRef.current);
+        const anotherPlaying = groups.find(g =>
+          g.id !== selectedGroupRef.current &&
+          g.playbackState === 'PLAYBACK_STATE_PLAYING'
+        );
+        if (shownGroup?.playbackState !== 'PLAYBACK_STATE_PLAYING' && anotherPlaying) {
+          selectedGroupRef.current = anotherPlaying.id;
+        }
+      }
 
       if (!active) {
         setData(d => ({ ...d, loading: false, groups: [], players: [], playing: false }));
@@ -309,6 +330,7 @@ function useSonos() {
     },
     switchGroup: (groupId) => {
       selectedGroupRef.current = groupId;
+      userPickedGroupRef.current = true;   // respect this choice; pause auto-switch
       poll();
     },
     addToGroup: (playerId) => {
