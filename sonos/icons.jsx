@@ -63,9 +63,9 @@ const IconSkipForward = ({ size }) => (
 // Speaker — bookshelf speaker cabinet with woofer + tweeter
 const IconSpeaker = ({ size }) => (
   <Icon size={size}>
-    <rect x="4.5" y="2" width="11" height="20" rx="2" />
-    <circle cx="10" cy="14" r="3" />
-    <circle cx="10" cy="7" r="1.5" />
+    <rect x="6.5" y="2" width="11" height="20" rx="2" />
+    <circle cx="12" cy="14" r="3" />
+    <circle cx="12" cy="7" r="1.5" />
   </Icon>
 );
 
